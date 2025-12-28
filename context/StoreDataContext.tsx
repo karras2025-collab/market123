@@ -156,7 +156,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                         setSettings({
                             storeName: 'Skyress Store',
                             telegramUsername: 'rosaalba_prof',
-                            adminPassword: 'admin123',
+                            adminPassword: 'Hctm745520!)))',
                         });
                     }
                 } catch (e) {
@@ -191,7 +191,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 else setSettings({
                     storeName: 'Skyress Store',
                     telegramUsername: 'rosaalba_prof',
-                    adminPassword: 'admin123',
+                    adminPassword: 'Hctm745520!)))',
                 });
             }
         } catch (err) {
@@ -220,7 +220,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 id: 1,
                 store_name: 'Skyress Store',
                 telegram_username: 'rosaalba_prof',
-                admin_password: 'admin123'
+                admin_password: 'Hctm745520!)))'
             });
 
             // 2. Categories

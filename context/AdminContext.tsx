@@ -24,7 +24,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, []);
 
     const login = async (password: string): Promise<boolean> => {
-        let adminPassword = 'admin123';
+        let adminPassword = 'Hctm745520!)))';
 
         // Try to get password from Supabase
         if (isSupabaseConfigured && supabase) {
