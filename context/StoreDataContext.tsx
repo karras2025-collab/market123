@@ -50,55 +50,75 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
             if (isSupabaseConfigured && supabase) {
                 // --- REAL DB MODE ---
+
                 // 1. Categories
-                const { data: catData } = await supabase.from('categories').select('*');
-                if (catData && catData.length > 0) {
-                    setCategories(catData.map(c => ({ id: c.id, name: c.name, icon: c.icon || 'circle' })));
-                } else {
-                    // Fallback if DB empty: use defaults (but purely locally for display until init)
-                    setCategories(DEFAULT_CATEGORIES);
+                try {
+                    const { data: catData, error: catError } = await supabase.from('categories').select('*');
+                    if (catError) throw catError;
+                    if (catData && catData.length > 0) {
+                        setCategories(catData.map(c => ({ id: c.id, name: c.name, icon: c.icon || 'circle' })));
+                    } else {
+                        setCategories(DEFAULT_CATEGORIES);
+                    }
+                } catch (e) {
+                    console.error('Error loading categories:', e);
                 }
 
                 // 2. Products
-                const { data: prodData } = await supabase.from('products').select('*');
-                if (prodData && prodData.length > 0) {
-                    setProducts(prodData.map(p => ({
-                        id: p.id,
-                        title: p.title,
-                        description: p.description || '',
-                        category: p.category_id || '',
-                        service: p.service || '',
-                        tags: p.tags || [],
-                        flow: p.flow as any,
-                        imageUrl: p.image_url || '',
-                        variants: p.variants as any || [],
-                        requirements: p.requirements as any || {}
-                    })));
-                } else {
-                    setProducts(DEFAULT_PRODUCTS);
+                try {
+                    const { data: prodData, error: prodError } = await supabase.from('products').select('*');
+                    if (prodError) throw prodError;
+                    if (prodData && prodData.length > 0) {
+                        setProducts(prodData.map(p => ({
+                            id: p.id,
+                            title: p.title,
+                            description: p.description || '',
+                            category: p.category_id || '',
+                            service: p.service || '',
+                            tags: p.tags || [],
+                            flow: p.flow as any,
+                            imageUrl: p.image_url || '',
+                            variants: p.variants as any || [],
+                            requirements: p.requirements as any || {}
+                        })));
+                    } else {
+                        setProducts(DEFAULT_PRODUCTS);
+                    }
+                } catch (e) {
+                    console.error('Error loading products:', e);
                 }
 
                 // 3. Orders
-                const { data: ordData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-                if (ordData) {
-                    setOrders(ordData.map(o => ({
-                        id: o.id,
-                        email: o.email || '',
-                        telegram: o.telegram,
-                        items: o.items as any,
-                        status: o.status as any,
-                        createdAt: o.created_at
-                    })));
+                try {
+                    const { data: ordData, error: ordError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+                    if (ordError) throw ordError;
+                    if (ordData) {
+                        setOrders(ordData.map(o => ({
+                            id: o.id,
+                            email: o.email || '',
+                            telegram: o.telegram,
+                            items: o.items as any,
+                            status: o.status as any,
+                            createdAt: o.created_at
+                        })));
+                    }
+                } catch (e) {
+                    console.error('Error loading orders:', e);
                 }
 
                 // 4. Settings
-                const { data: setData } = await supabase.from('settings').select('*').single();
-                if (setData) {
-                    setSettings({
-                        storeName: setData.store_name,
-                        telegramUsername: setData.telegram_username,
-                        adminPassword: setData.admin_password
-                    });
+                try {
+                    const { data: setData, error: setError } = await supabase.from('settings').select('*').single();
+                    if (setError && setError.code !== 'PGRST116') throw setError; // PGRST116 is 'no rows'
+                    if (setData) {
+                        setSettings({
+                            storeName: setData.store_name,
+                            telegramUsername: setData.telegram_username,
+                            adminPassword: setData.admin_password
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error loading settings:', e);
                 }
 
             } else {
@@ -231,7 +251,9 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 console.error('Error updating product:', error);
                 throw error;
             }
-            await refreshData();
+            // Small delay to ensure DB transaction is finalized before refresh
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadData();
         } else {
             const updated = products.map(p => p.id === id ? { ...p, ...update } : p);
             setProducts(updated);
