@@ -7,11 +7,19 @@ interface StoreDataContextType {
     products: Product[];
     categories: Category[];
     orders: Order[];
-    settings: StoreSettings;
+    banners: Banner[];
+    settings: StoreSettings | null;
     isLoading: boolean;
     addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
     updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
     deleteProduct: (id: string) => Promise<void>;
+
+    // Banners
+    addBanner: (banner: Omit<Banner, 'id'>) => Promise<void>;
+    updateBanner: (id: string, banner: Partial<Banner>) => Promise<void>;
+    deleteBanner: (id: string) => Promise<void>;
+
+    // Categories
     addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
     updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
     deleteCategory: (id: string) => Promise<void>;
@@ -37,11 +45,8 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
     const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
     const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [settings, setSettings] = useState<StoreSettings>({
-        storeName: 'Skyress Store',
-        telegramUsername: 'rosaalba_prof',
-        adminPassword: 'admin123',
-    });
+    const [banners, setBanners] = useState<Banner[]>([]);
+    const [settings, setSettings] = useState<StoreSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Load data
@@ -112,7 +117,26 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                     console.error('Error loading orders:', e);
                 }
 
-                // 4. Settings
+                // 4. Banners
+                try {
+                    const { data: banData } = await supabase.from('banners').select('*').order('sort_order', { ascending: true });
+                    if (banData) {
+                        setBanners(banData.map(b => ({
+                            id: b.id,
+                            title: b.title,
+                            description: b.description || '',
+                            imageUrl: b.image_url,
+                            linkUrl: b.link_url || '',
+                            buttonText: b.button_text || '',
+                            sortOrder: b.sort_order,
+                            active: b.active
+                        })));
+                    }
+                } catch (e) {
+                    console.error('Error loading banners:', e);
+                }
+
+                // 5. Settings
                 try {
                     const { data: setData, error: setError } = await supabase.from('settings').select('*').single();
                     if (setError && setError.code !== 'PGRST116') throw setError; // PGRST116 is 'no rows'
@@ -121,6 +145,12 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                             storeName: setData.store_name,
                             telegramUsername: setData.telegram_username,
                             adminPassword: setData.admin_password
+                        });
+                    } else {
+                        setSettings({
+                            storeName: 'Skyress Store',
+                            telegramUsername: 'rosaalba_prof',
+                            adminPassword: 'admin123',
                         });
                     }
                 } catch (e) {
@@ -152,6 +182,11 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
 
                 const storedSettings = localStorage.getItem(STORAGE_KEYS.settings);
                 if (storedSettings) setSettings(prev => ({ ...prev, ...JSON.parse(storedSettings) }));
+                else setSettings({
+                    storeName: 'Skyress Store',
+                    telegramUsername: 'rosaalba_prof',
+                    adminPassword: 'admin123',
+                });
             }
         } catch (err) {
             console.error('Error loading data:', err);
@@ -408,16 +443,62 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
         return data.publicUrl;
     };
 
+    // Banners
+    const addBanner = async (banner: Omit<Banner, 'id'>) => {
+        if (isSupabaseConfigured && supabase) {
+            const newId = `banner-${Date.now()}`;
+            const dbBanner = {
+                id: newId,
+                title: banner.title,
+                description: banner.description,
+                image_url: banner.imageUrl,
+                link_url: banner.linkUrl,
+                button_text: banner.buttonText,
+                sort_order: banner.sortOrder,
+                active: banner.active
+            };
+            await supabase.from('banners').insert([dbBanner]);
+            await refreshData();
+        }
+    };
+
+    const updateBanner = async (id: string, update: Partial<Banner>) => {
+        if (isSupabaseConfigured && supabase) {
+            const dbUpdate: any = {};
+            if (update.title !== undefined) dbUpdate.title = update.title;
+            if (update.description !== undefined) dbUpdate.description = update.description;
+            if (update.imageUrl !== undefined) dbUpdate.image_url = update.imageUrl;
+            if (update.linkUrl !== undefined) dbUpdate.link_url = update.linkUrl;
+            if (update.buttonText !== undefined) dbUpdate.button_text = update.buttonText;
+            if (update.sortOrder !== undefined) dbUpdate.sort_order = update.sortOrder;
+            if (update.active !== undefined) dbUpdate.active = update.active;
+
+            await supabase.from('banners').update(dbUpdate).eq('id', id);
+            await refreshData();
+        }
+    };
+
+    const deleteBanner = async (id: string) => {
+        if (isSupabaseConfigured && supabase) {
+            await supabase.from('banners').delete().eq('id', id);
+            await refreshData();
+        }
+    };
+
     return (
         <StoreDataContext.Provider value={{
             products,
             categories,
             orders,
+            banners,
             settings,
             isLoading,
             addProduct,
             updateProduct,
             deleteProduct,
+            addBanner,
+            updateBanner,
+            deleteBanner,
             addCategory,
             updateCategory,
             deleteCategory,

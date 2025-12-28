@@ -14,10 +14,11 @@ const AdminLayout = lazy(() => import('./admin/AdminLayout'));
 const AdminLogin = lazy(() => import('./admin/AdminLogin'));
 const Dashboard = lazy(() => import('./admin/Dashboard'));
 const Products = lazy(() => import('./admin/Products'));
-const ProductForm = lazy(() => import('./admin/ProductForm'));
-const Categories = lazy(() => import('./admin/Categories'));
-const Orders = lazy(() => import('./admin/Orders'));
-const Settings = lazy(() => import('./admin/Settings'));
+const AdminProductForm = lazy(() => import('./admin/ProductForm'));
+const AdminCategories = React.lazy(() => import('./admin/Categories'));
+const AdminOrders = React.lazy(() => import('./admin/Orders'));
+const AdminSettings = React.lazy(() => import('./admin/Settings'));
+const AdminBanners = React.lazy(() => import('./admin/Banners'));
 
 // Loading component for admin
 const AdminLoader = () => (
@@ -52,11 +53,12 @@ function App() {
               }>
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
-                <Route path="products/new" element={<ProductForm />} />
-                <Route path="products/:id" element={<ProductForm />} />
-                <Route path="categories" element={<Categories />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="settings" element={<Settings />} />
+                <Route path="products/new" element={<AdminProductForm />} />
+                <Route path="products/:id" element={<AdminProductForm />} />
+                <Route path="categories" element={<AdminCategories />} />
+                <Route path="banners" element={<AdminBanners />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="settings" element={<AdminSettings />} />
               </Route>
             </Routes>
           </Router>

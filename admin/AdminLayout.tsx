@@ -9,7 +9,8 @@ import {
     Settings,
     LogOut,
     Store,
-    ChevronRight
+    ChevronRight,
+    Image
 } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
@@ -32,6 +33,7 @@ const AdminLayout: React.FC = () => {
         { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
         { path: '/admin/products', icon: Package, label: 'Товары' },
         { path: '/admin/categories', icon: FolderOpen, label: 'Категории' },
+        { path: '/admin/banners', icon: Image, label: 'Баннеры' },
         { path: '/admin/orders', icon: ShoppingBag, label: 'Заказы' },
         { path: '/admin/settings', icon: Settings, label: 'Настройки' },
     ];
@@ -67,8 +69,8 @@ const AdminLayout: React.FC = () => {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
-                                        ? 'bg-primary/10 text-primary border border-primary/20'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                    ? 'bg-primary/10 text-primary border border-primary/20'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                                     }`}
                             >
                                 <item.icon className="w-5 h-5" />

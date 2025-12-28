@@ -66,3 +66,14 @@ export interface StoreSettings {
   telegramUsername: string;
   adminPassword: string;
 }
+
+export interface Banner {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  linkUrl: string;
+  buttonText: string;
+  sortOrder: number;
+  active: boolean;
+}
