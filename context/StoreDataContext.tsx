@@ -218,7 +218,13 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Products
     const addProduct = async (product: Omit<Product, 'id'>) => {
         if (isSupabaseConfigured && supabase) {
+            // Generate ID manually since DB likely expects text ID
+            // Simple slug-like ID or timestamp backup
+            const cleanTitle = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const generatedId = cleanTitle ? `${cleanTitle}-${Date.now().toString().slice(-4)}` : `prod-${Date.now()}`;
+
             const newProduct = {
+                id: generatedId,
                 title: product.title,
                 description: product.description,
                 category_id: product.category,
@@ -229,7 +235,12 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 variants: product.variants,
                 requirements: product.requirements
             };
-            await supabase.from('products').insert([newProduct]);
+            const { error } = await supabase.from('products').insert([newProduct]);
+            if (error) {
+                console.error('Error creating product:', error);
+                alert('Ошибка создания товара: ' + error.message);
+                throw error;
+            }
             await refreshData();
         } else {
             const newP = { ...product, id: 'prod-' + Date.now() };
