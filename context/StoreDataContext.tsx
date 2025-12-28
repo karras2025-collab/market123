@@ -68,7 +68,9 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 try {
                     const { data: prodData, error: prodError } = await supabase.from('products').select('*');
                     if (prodError) throw prodError;
+
                     if (prodData && prodData.length > 0) {
+                        console.log('Loaded products from DB:', prodData.length);
                         setProducts(prodData.map(p => ({
                             id: p.id,
                             title: p.title,
@@ -82,10 +84,14 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                             requirements: p.requirements as any || {}
                         })));
                     } else {
+                        console.warn('DB empty or RLS blocked. Loading defaults.');
+                        // ALERT FOR DEBUGGING (can remove later)
+                        // alert('Внимание: Продукты загружены из локального файла (Defaults), а не из базы данных! База пуста или заблокирована.');
                         setProducts(DEFAULT_PRODUCTS);
                     }
                 } catch (e) {
                     console.error('Error loading products:', e);
+                    alert('Ошибка загрузки продуктов из БД: ' + JSON.stringify(e));
                 }
 
                 // 3. Orders
@@ -249,7 +255,10 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             const { error } = await supabase.from('products').update(dbUpdate).eq('id', id);
             if (error) {
                 console.error('Error updating product:', error);
+                alert('Ошибка обновления продукта: ' + error.message);
                 throw error;
+            } else {
+                // alert('Продукт успешно обновлен в БД!'); 
             }
             // Small delay to ensure DB transaction is finalized before refresh
             await new Promise(resolve => setTimeout(resolve, 500));
