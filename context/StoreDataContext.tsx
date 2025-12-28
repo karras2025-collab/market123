@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, Category, Order, StoreSettings } from '../types';
+import {
+    Product,
+    Category,
+    Order,
+    StoreSettings,
+    Banner
+} from '../types';
 import { PRODUCTS as DEFAULT_PRODUCTS, CATEGORIES as DEFAULT_CATEGORIES } from '../constants';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 

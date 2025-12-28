@@ -54,119 +54,204 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Trust Metrics */}
-      <section className="px-4 py-6 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-6 transition hover:border-primary/20 hover:bg-[#1c2230]">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-white">Быстро</p>
-                <p className="text-sm text-gray-400">Обработка в течение дня</p>
-              </div>
-            </div>
-            <div className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-6 transition hover:border-primary/20 hover:bg-[#1c2230]">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-white">Гарантия</p>
-                <p className="text-sm text-gray-400">Полная гарантия на срок</p>
-              </div>
-            </div>
-            <div className="group flex items-center gap-4 rounded-xl border border-border bg-surface p-6 transition hover:border-primary/20 hover:bg-[#1c2230]">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <CreditCard className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-white">Удобно</p>
-                <p className="text-sm text-gray-400">Без иностранных карт</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="px-4 py-12 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white tracking-tight">Категории</h2>
-            <Link to="/catalog" className="text-sm font-semibold text-primary hover:text-blue-400 flex items-center gap-1">
-              Все <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/catalog?category=${cat.id}`}
-                className="group flex flex-col items-center gap-3 rounded-xl border border-border bg-surface p-6 transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+        <div className="min-h-screen bg-background">
+          {/* Hero Slider */}
+          <div className="relative h-[500px] lg:h-[600px] w-full overflow-hidden">
+            {displayBanners.map((banner, index) => (
+              <div
+                key={banner.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  }`}
               >
-                <div className="flex size-14 items-center justify-center rounded-full bg-background border border-border group-hover:border-primary/50 group-hover:bg-primary/20 transition-all">
-                  <div className="text-gray-400 group-hover:text-primary text-2xl font-bold">
-                    {cat.name.charAt(0)}
+                {/* Background Image with Gradient Overlay */}
+                <div className="absolute inset-0">
+                  <img
+                    src={banner.imageUrl}
+                    alt={banner.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                </div>
+
+                {/* Content */}
+                <div className="relative z-20 h-full max-w-7xl mx-auto px-4 lg:px-10 flex flex-col justify-center">
+                  <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                      {banner.title}
+                    </h1>
+                    <p className="text-lg text-gray-300 mb-8 leading-relaxed">
+                      {banner.description}
+                    </p>
+                    <Link
+                      to={banner.linkUrl || '/catalog'}
+                      className="inline-flex items-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 transform hover:-translate-y-1"
+                    >
+                      {banner.buttonText || 'Подробнее'}
+                      <ArrowRight className="w-5 h-5" />
+                    </Link>
                   </div>
                 </div>
-                <span className="text-sm font-medium text-gray-300 group-hover:text-white text-center">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Products */}
-      <section className="bg-surface/30 border-y border-border px-4 py-16 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Популярные товары</h2>
-            <p className="mt-2 text-gray-400">Самые востребованные подписки этой недели</p>
-          </div>
-          {popularProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {popularProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              <p>Добавьте товары с тегом "popular" чтобы они появились здесь</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="px-4 py-16 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="mb-12 text-center text-2xl font-bold text-white">Как это работает</h2>
-          <div className="relative flex flex-col justify-between gap-8 md:flex-row">
-            <div className="absolute left-0 top-8 hidden h-0.5 w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-primary/30 to-transparent md:block"></div>
-
-            {[
-              { title: 'Выберите сервис', desc: 'Найдите нужную подписку в каталоге.', icon: '1' },
-              { title: 'Напишите в Telegram', desc: 'Добавьте в корзину и оформите заказ.', icon: '2' },
-              { title: 'Получите доступ', desc: 'Получите данные для входа.', icon: '3' }
-            ].map((step, idx) => (
-              <div key={idx} className="relative flex flex-1 flex-col items-center text-center">
-                <div className="relative z-10 mb-6 flex size-16 items-center justify-center rounded-2xl border-2 border-primary/50 bg-background text-primary shadow-[0_0_15px_rgba(19,91,236,0.3)] font-bold text-xl">
-                  {step.icon}
-                </div>
-                <h3 className="mb-2 text-lg font-bold text-white">{step.title}</h3>
-                <p className="max-w-xs text-sm text-gray-400">{step.desc}</p>
               </div>
             ))}
+
+            {/* Slider Controls */}
+            {displayBanners.length > 1 && (
+              <div className="absolute bottom-8 right-8 z-30 flex gap-4 pr-4 lg:pr-10">
+                <button onClick={prevSlide} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/10">
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button onClick={nextSlide} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/10">
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+            )}
+
+            {/* Slider Indicators */}
+            {displayBanners.length > 1 && (
+              <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-2">
+                {displayBanners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'w-8 bg-primary' : 'bg-white/30 hover:bg-white/50'
+                      }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Features Section */}
+          <div className="py-12 border-b border-border bg-surface/30 backdrop-blur-sm">
+            <div className="max-w-7xl mx-auto px-4 lg:px-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold">Мгновенная доставка</h3>
+                  <p className="text-sm text-gray-500">Товары приходят сразу после оплаты</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                  <Star className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold">Лучшие сервисы</h3>
+                  <p className="text-sm text-gray-500">ChatGPT, Spotify, Midjourney и другие</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold">Гарантия качества</h3>
+                  <p className="text-sm text-gray-500">Полная поддержка на всех этапах</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 lg:px-10 py-16 space-y-20">
+
+            {/* Popular Categories */}
+            <section>
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Популярные категории</h2>
+                <Link to="/catalog" className="text-primary hover:text-blue-400 transition-colors">
+                  Все категории
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`/catalog?category=${category.id}`}
+                    className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-surface border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-background flex items-center justify-center text-gray-400 group-hover:text-primary group-hover:scale-110 transition-all">
+                      <div className={`icon-${category.icon} w-6 h-6`} />
+                      {/* Note: Icon rendering might need a helper if icons are strings */}
+                    </div>
+                    <span className="font-medium text-gray-300 group-hover:text-white transition-colors">
+                      {category.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Featured Products per Category */}
+            {productsByCategory.map((category) => (
+              <section key={category.id}>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-8 w-1 bg-primary rounded-full" />
+                  <h2 className="text-2xl font-bold text-white">{category.name}</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {category.items.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/catalog/${product.id}`}
+                      className="group bg-surface rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/10 flex flex-col h-full"
+                    >
+                      <div className="aspect-[16/10] overflow-hidden relative">
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        {product.tags.includes('new') && (
+                          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
+                            New
+                          </span>
+                        )}
+                        {product.tags.includes('popular') && (
+                          <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-purple-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
+                            Hit
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-5 flex flex-col flex-1">
+                        <h3 className="font-bold text-lg text-white mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                          {product.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm line-clamp-2 mb-4 flex-1">
+                          {product.description}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                          <div className="flex gap-2">
+                            {product.variants.slice(0, 2).map(v => (
+                              <span key={v.id} className="text-xs px-2 py-1 rounded-md bg-white/5 text-gray-400">
+                                {v.name}
+                              </span>
+                            ))}
+                            {product.variants.length > 2 && (
+                              <span className="text-xs px-2 py-1 rounded-md bg-white/5 text-gray-400">
+                                +{product.variants.length - 2}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
+
           </div>
         </div>
-      </section>
-    </>
-  );
+        );
 };
 
-export default HomePage;
+        export default HomePage;
