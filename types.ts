@@ -3,6 +3,7 @@ export type CheckoutFlow = 'site_request' | 'telegram_redirect';
 export interface Variant {
   id: string;
   name: string;
+  price?: number;
   priceDisplay?: string;
 }
 

@@ -27,7 +27,7 @@ const ProductForm: React.FC = () => {
         tags: [] as string[],
         flow: 'telegram_redirect' as CheckoutFlow,
         imageUrl: '',
-        variants: [{ id: 'var-1', name: '' }] as Variant[],
+        variants: [{ id: 'var-1', name: '', price: 0 }] as Variant[],
         requirements: {
             needsAccountEmail: false,
             needsRegion: false,
@@ -53,7 +53,7 @@ const ProductForm: React.FC = () => {
                 imageUrl: existingProduct.imageUrl,
                 variants: existingProduct.variants.length > 0
                     ? existingProduct.variants
-                    : [{ id: 'var-1', name: '' }],
+                    : [{ id: 'var-1', name: '', price: 0 }],
                 requirements: existingProduct.requirements,
             });
         }
@@ -102,7 +102,7 @@ const ProductForm: React.FC = () => {
     const addVariant = () => {
         setFormData(prev => ({
             ...prev,
-            variants: [...prev.variants, { id: `var-${Date.now()}`, name: '' }],
+            variants: [...prev.variants, { id: `var-${Date.now()}`, name: '', price: 0 }],
         }));
     };
 
@@ -113,11 +113,11 @@ const ProductForm: React.FC = () => {
         }));
     };
 
-    const updateVariant = (index: number, value: string) => {
+    const updateVariant = (index: number, field: keyof Variant, value: string | number) => {
         setFormData(prev => ({
             ...prev,
             variants: prev.variants.map((v, i) =>
-                i === index ? { ...v, name: value } : v
+                i === index ? { ...v, [field]: value } : v
             ),
         }));
     };
@@ -341,9 +341,16 @@ const ProductForm: React.FC = () => {
                                 <input
                                     type="text"
                                     value={variant.name}
-                                    onChange={(e) => updateVariant(index, e.target.value)}
+                                    onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                                    className="flex-[2] bg-background border border-border rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    placeholder="Название (напр. 1 месяц)"
+                                />
+                                <input
+                                    type="number"
+                                    value={variant.price || ''}
+                                    onChange={(e) => updateVariant(index, 'price', Number(e.target.value))}
                                     className="flex-1 bg-background border border-border rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="Название варианта (например: 1 месяц)"
+                                    placeholder="Цена (₽)"
                                 />
                                 {formData.variants.length > 1 && (
                                     <button

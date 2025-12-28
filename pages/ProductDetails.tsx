@@ -103,6 +103,9 @@ const ProductDetailsPage: React.FC = () => {
                       onChange={() => setSelectedVariantId(variant.id)}
                     />
                     <span className="font-bold text-white">{variant.name}</span>
+                    {variant.price && (
+                      <span className="text-primary font-mono">{variant.price.toLocaleString('ru-RU')} ₽</span>
+                    )}
                     {selectedVariantId === variant.id && (
                       <CheckCircle className="w-5 h-5 text-primary" />
                     )}
@@ -122,8 +125,8 @@ const ProductDetailsPage: React.FC = () => {
             <button
               onClick={handleAddToCart}
               className={`w-full font-bold text-lg py-4 px-6 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${addedToCart
-                  ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20'
-                  : 'bg-primary hover:bg-blue-600 text-white shadow-primary/20'
+                ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20'
+                : 'bg-primary hover:bg-blue-600 text-white shadow-primary/20'
                 }`}
             >
               {addedToCart ? (
