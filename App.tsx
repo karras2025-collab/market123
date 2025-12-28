@@ -1,5 +1,11 @@
 import React, { Suspense, lazy } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+
+// Redirect component for legacy /catalog/:id URLs to /product/:id
+const CatalogProductRedirect: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/product/${id}`} replace />;
+};
 import { CartProvider } from './context/CartContext';
 import { AdminProvider } from './context/AdminContext';
 import { StoreDataProvider } from './context/StoreDataContext';
@@ -38,6 +44,7 @@ function App() {
               <Route path="/" element={<Layout><HomePage /></Layout>} />
               <Route path="/catalog" element={<Layout><CatalogPage /></Layout>} />
               <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
+              <Route path="/catalog/:id" element={<Layout><CatalogProductRedirect /></Layout>} />
               <Route path="/cart" element={<Layout><CartPage /></Layout>} />
 
               {/* Admin Routes */}
