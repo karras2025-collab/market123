@@ -20,6 +20,7 @@ interface StoreDataContextType {
     updateSettings: (settings: Partial<StoreSettings>) => Promise<void>;
     refreshData: () => Promise<void>;
     initializeDatabase: () => Promise<void>;
+    uploadImage: (file: File) => Promise<string>;
 }
 
 const StoreDataContext = createContext<StoreDataContextType | undefined>(undefined);
@@ -214,18 +215,22 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const updateProduct = async (id: string, update: Partial<Product>) => {
         if (isSupabaseConfigured && supabase) {
-            const dbUpdate: any = {};
-            if (update.title) dbUpdate.title = update.title;
-            if (update.description) dbUpdate.description = update.description;
-            if (update.category) dbUpdate.category_id = update.category;
-            if (update.service) dbUpdate.service = update.service;
-            if (update.tags) dbUpdate.tags = update.tags;
-            if (update.flow) dbUpdate.flow = update.flow;
-            if (update.imageUrl) dbUpdate.image_url = update.imageUrl;
-            if (update.variants) dbUpdate.variants = update.variants;
-            if (update.requirements) dbUpdate.requirements = update.requirements;
+            const dbUpdate: Record<string, any> = {};
+            if (update.title !== undefined) dbUpdate.title = update.title;
+            if (update.description !== undefined) dbUpdate.description = update.description;
+            if (update.category !== undefined) dbUpdate.category_id = update.category;
+            if (update.service !== undefined) dbUpdate.service = update.service;
+            if (update.tags !== undefined) dbUpdate.tags = update.tags;
+            if (update.flow !== undefined) dbUpdate.flow = update.flow;
+            if (update.imageUrl !== undefined) dbUpdate.image_url = update.imageUrl;
+            if (update.variants !== undefined) dbUpdate.variants = update.variants;
+            if (update.requirements !== undefined) dbUpdate.requirements = update.requirements;
 
-            await supabase.from('products').update(dbUpdate).eq('id', id);
+            const { error } = await supabase.from('products').update(dbUpdate).eq('id', id);
+            if (error) {
+                console.error('Error updating product:', error);
+                throw error;
+            }
             await refreshData();
         } else {
             const updated = products.map(p => p.id === id ? { ...p, ...update } : p);
@@ -320,18 +325,45 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Settings
     const updateSettings = async (newSettings: Partial<StoreSettings>) => {
         if (isSupabaseConfigured && supabase) {
-            const dbSettings: any = {};
-            if (newSettings.storeName) dbSettings.store_name = newSettings.storeName;
-            if (newSettings.telegramUsername) dbSettings.telegram_username = newSettings.telegramUsername;
-            if (newSettings.adminPassword) dbSettings.admin_password = newSettings.adminPassword;
+            const dbSettings: Record<string, any> = {};
+            if (newSettings.storeName !== undefined) dbSettings.store_name = newSettings.storeName;
+            if (newSettings.telegramUsername !== undefined) dbSettings.telegram_username = newSettings.telegramUsername;
+            if (newSettings.adminPassword !== undefined) dbSettings.admin_password = newSettings.adminPassword;
 
-            await supabase.from('settings').update(dbSettings).eq('id', 1);
+            const { error } = await supabase.from('settings').update(dbSettings).eq('id', 1);
+            if (error) {
+                console.error('Error updating settings:', error);
+                throw error;
+            }
             await refreshData();
         } else {
             const updated = { ...settings, ...newSettings };
             setSettings(updated);
             localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(updated));
         }
+    };
+
+    // Upload image to Supabase Storage
+    const uploadImage = async (file: File): Promise<string> => {
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error('Supabase не настроен. Загрузка изображений недоступна.');
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error } = await supabase.storage.from('products').upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+        if (error) {
+            console.error('Upload error:', error);
+            throw error;
+        }
+
+        const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+        return data.publicUrl;
     };
 
     return (
@@ -352,6 +384,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             updateSettings,
             refreshData,
             initializeDatabase,
+            uploadImage,
         }}>
             {children}
         </StoreDataContext.Provider>

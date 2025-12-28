@@ -14,7 +14,7 @@ import {
 const ProductForm: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { products, categories, addProduct, updateProduct, isLoading } = useStoreData();
+    const { products, categories, addProduct, updateProduct, uploadImage, isLoading } = useStoreData();
 
     const isEdit = Boolean(id);
     const existingProduct = id ? products.find(p => p.id === id) : null;
@@ -39,6 +39,7 @@ const ProductForm: React.FC = () => {
 
     const [tagInput, setTagInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (existingProduct) {
@@ -62,19 +63,40 @@ const ProductForm: React.FC = () => {
         e.preventDefault();
         setIsSaving(true);
 
-        const productData = {
-            ...formData,
-            variants: formData.variants.filter(v => v.name.trim() !== ''),
-        };
+        try {
+            const productData = {
+                ...formData,
+                variants: formData.variants.filter(v => v.name.trim() !== ''),
+            };
 
-        if (isEdit && id) {
-            await updateProduct(id, productData);
-        } else {
-            await addProduct(productData);
+            if (isEdit && id) {
+                await updateProduct(id, productData);
+            } else {
+                await addProduct(productData);
+            }
+            navigate('/admin/products');
+        } catch (error) {
+            console.error('Error saving product:', error);
+            alert('Ошибка при сохранении товара');
+        } finally {
+            setIsSaving(false);
         }
+    };
 
-        setIsSaving(false);
-        navigate('/admin/products');
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadImage(file);
+            setFormData(prev => ({ ...prev, imageUrl: url }));
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Ошибка при загрузке изображения');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const addVariant = () => {
@@ -222,29 +244,81 @@ const ProductForm: React.FC = () => {
                             </select>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                URL изображения
+                        <div className="md:col-span-2 space-y-4">
+                            <label className="block text-sm font-medium text-gray-300">
+                                Изображение товара
                             </label>
-                            <input
-                                type="url"
-                                value={formData.imageUrl}
-                                onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                                className="w-full bg-background border border-border rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="https://..."
-                            />
+
+                            <div className="flex flex-col md:flex-row gap-4">
+                                {/* File Upload */}
+                                <div className="flex-1">
+                                    <div className="relative group">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                            id="image-upload"
+                                            disabled={isUploading}
+                                        />
+                                        <label
+                                            htmlFor="image-upload"
+                                            className={`flex items-center justify-center gap-3 w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${isUploading
+                                                ? 'bg-white/5 border-gray-600 opacity-50'
+                                                : 'bg-white/5 border-border hover:border-primary/50 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            {isUploading ? (
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                    <span className="text-sm text-gray-400">Загрузка...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Image className="w-8 h-8 text-gray-500 group-hover:text-primary transition-colors" />
+                                                    <span className="text-sm text-gray-400 group-hover:text-gray-300">Нажмите для загрузки файла</span>
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* URL Input fallback */}
+                                <div className="flex-1">
+                                    <div className="h-full flex flex-col justify-end">
+                                        <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
+                                            Или вставьте URL ссылки
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={formData.imageUrl}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                                            className="w-full bg-background border border-border rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Image Preview */}
+                            {formData.imageUrl && (
+                                <div className="relative inline-block mt-4">
+                                    <img
+                                        src={formData.imageUrl}
+                                        alt="Предпросмотр"
+                                        className="w-32 h-32 rounded-xl object-cover border border-border shadow-2xl"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    {/* Image Preview */}
-                    {formData.imageUrl && (
-                        <div className="mt-4">
-                            <div
-                                className="w-32 h-32 rounded-xl bg-cover bg-center border border-border"
-                                style={{ backgroundImage: `url(${formData.imageUrl})` }}
-                            />
-                        </div>
-                    )}
                 </div>
 
                 {/* Variants */}
