@@ -11,7 +11,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cart } = useCart();
-  const { settings } = useStoreData();
+  const { settings, isLoading } = useStoreData();
   const location = useLocation();
 
   const navLinks = [
@@ -33,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600 shadow-lg shadow-primary/20">
                 <Globe className="text-white w-6 h-6" />
               </div>
-              <h2 className="text-xl font-bold leading-tight tracking-tight">{settings.storeName}</h2>
+              <h2 className="text-xl font-bold leading-tight tracking-tight">{settings?.storeName || 'Skyress Store'}</h2>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
@@ -123,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-white">
                 <Globe className="text-primary w-6 h-6" />
-                <span className="text-lg font-bold">{settings.storeName}</span>
+                <span className="text-lg font-bold">{settings?.storeName || 'Skyress Store'}</span>
               </div>
               <p className="text-sm leading-relaxed">
                 Ваш #1 магазин премиум цифровых подписок. Безопасно, быстро и надёжно через Telegram.
@@ -157,13 +157,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-bold">TG</span>
-                  @{settings.telegramUsername}
+                  @{settings?.telegramUsername || 'skyress_support'}
                 </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 border-t border-border pt-8 text-center text-xs">
-            <p>&copy; 2025 {settings.storeName}. Все права защищены.</p>
+            <p>&copy; 2025 {settings?.storeName || 'Skyress Store'}. Все права защищены.</p>
           </div>
         </div>
       </footer>

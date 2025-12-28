@@ -16,9 +16,18 @@ const Settings: React.FC = () => {
     const { settings, updateSettings, isLoading, initializeDatabase } = useStoreData();
 
     const [formData, setFormData] = useState({
-        storeName: settings.storeName,
-        telegramUsername: settings.telegramUsername,
+        storeName: settings?.storeName || '',
+        telegramUsername: settings?.telegramUsername || '',
     });
+
+    React.useEffect(() => {
+        if (settings) {
+            setFormData({
+                storeName: settings.storeName,
+                telegramUsername: settings.telegramUsername,
+            });
+        }
+    }, [settings]);
 
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
@@ -55,7 +64,7 @@ const Settings: React.FC = () => {
         e.preventDefault();
         setPasswordMessage(null);
 
-        if (passwordForm.currentPassword !== settings.adminPassword) {
+        if (passwordForm.currentPassword !== settings?.adminPassword) {
             setPasswordMessage({ type: 'error', text: 'Неверный текущий пароль' });
             return;
         }
