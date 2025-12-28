@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStoreData } from '../context/StoreDataContext';
 import { useCart } from '../context/CartContext';
@@ -13,6 +13,28 @@ const ProductDetailsPage: React.FC = () => {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  // Set default variant safely - MUST be before any conditional returns (Rules of Hooks)
+  useEffect(() => {
+    if (product && product.variants.length > 0 && !selectedVariantId) {
+      setSelectedVariantId(product.variants[0].id);
+    }
+  }, [product, selectedVariantId]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    const variant = product.variants.find(v => v.id === selectedVariantId);
+    if (!variant) return;
+
+    const result = addToCart(product, variant);
+    if (!result.success && result.error) {
+      setErrorMsg(result.error);
+    } else {
+      setErrorMsg(null);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -30,25 +52,6 @@ const ProductDetailsPage: React.FC = () => {
       </div>
     );
   }
-
-  // Set default variant
-  if (!selectedVariantId && product.variants.length > 0) {
-    setSelectedVariantId(product.variants[0].id);
-  }
-
-  const handleAddToCart = () => {
-    const variant = product.variants.find(v => v.id === selectedVariantId);
-    if (!variant) return;
-
-    const result = addToCart(product, variant);
-    if (!result.success && result.error) {
-      setErrorMsg(result.error);
-    } else {
-      setErrorMsg(null);
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-10 py-8">
