@@ -65,6 +65,7 @@ export interface StoreSettings {
   storeName: string;
   telegramUsername: string;
   adminPassword: string;
+  bannerInterval?: number; // ms, default 3000
 }
 
 export interface Banner {
@@ -72,6 +73,7 @@ export interface Banner {
   title: string;
   description: string;
   imageUrl: string;
+  heroImageUrl?: string; // Right-side hero image (PNG with transparency)
   linkUrl: string;
   buttonText: string;
   sortOrder: number;

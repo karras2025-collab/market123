@@ -1,39 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useStoreData } from '../context/StoreDataContext';
-import { ArrowRight, ShieldCheck, Zap, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import HeroSlider from '../components/HeroSlider';
+import { ArrowRight, ShieldCheck, Zap, Star } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { products, categories, banners, isLoading } = useStoreData();
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  // Auto-play slider
-  useEffect(() => {
-    if (banners && banners.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentSlide(prev => (prev + 1) % banners.filter(b => b.active).length);
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [banners]);
-
-  // Filter active banners
-  const activeBanners = banners ? banners.filter(b => b.active) : [];
-
-  // Fallback banner if none exist
-  const displayBanners = activeBanners.length > 0 ? activeBanners : [{
-    id: 'default',
-    title: 'Цифровое будущее',
-    description: 'Магазин цифровых товаров и подписок. Мгновенный доступ к премиум-сервисам.',
-    imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80',
-    linkUrl: '/catalog',
-    buttonText: 'Перейти в каталог',
-    sortOrder: 0,
-    active: true
-  }];
-
-  const nextSlide = () => setCurrentSlide(prev => (prev + 1) % displayBanners.length);
-  const prevSlide = () => setCurrentSlide(prev => (prev - 1 + displayBanners.length) % displayBanners.length);
 
   // Group products by category for the showcase
   const productsByCategory = categories.map(cat => ({
@@ -52,75 +24,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Slider */}
-      <div className="relative h-[500px] lg:h-[600px] w-full overflow-hidden">
-        {displayBanners.map((banner, index) => (
-          <div
-            key={banner.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-          >
-            {/* Background Image with Gradient Overlay */}
-            <div className="absolute inset-0">
-              <img
-                src={banner.imageUrl}
-                alt={banner.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-            </div>
-
-            {/* Content */}
-            <div className="relative z-20 h-full max-w-7xl mx-auto px-4 lg:px-10 flex flex-col justify-center">
-              <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary uppercase tracking-wider mb-6">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                  Skyress Store
-                </div>
-                <h1 className="text-4xl lg:text-6xl font-black text-white mb-6 leading-tight drop-shadow-lg">
-                  {banner.title}
-                </h1>
-                <p className="text-lg text-gray-200 mb-8 leading-relaxed max-w-xl drop-shadow-md">
-                  {banner.description}
-                </p>
-                <Link
-                  to={banner.linkUrl || '/catalog'}
-                  className="inline-flex items-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 transform hover:-translate-y-1"
-                >
-                  {banner.buttonText || 'Подробнее'}
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {/* Slider Controls */}
-        {displayBanners.length > 1 && (
-          <div className="absolute bottom-8 right-8 z-30 flex gap-4 pr-4 lg:pr-10">
-            <button onClick={prevSlide} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/10">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button onClick={nextSlide} className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/10">
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
-        )}
-
-        {/* Slider Indicators */}
-        {displayBanners.length > 1 && (
-          <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-2">
-            {displayBanners.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlide(idx)}
-                className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-8 bg-primary' : 'w-4 bg-white/30 hover:bg-white/50'
-                  }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <HeroSlider banners={banners} />
 
       {/* Features Section */}
       <div className="py-12 border-b border-border bg-surface/30 backdrop-blur-sm">
@@ -195,7 +99,7 @@ const HomePage: React.FC = () => {
               {category.items.map((product) => (
                 <Link
                   key={product.id}
-                  to={`/catalog/${product.id}`}
+                  to={`/product/${product.id}`}
                   className="group bg-surface rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all hover:shadow-xl hover:shadow-primary/10 flex flex-col h-full"
                 >
                   <div className="aspect-[16/10] overflow-hidden relative">

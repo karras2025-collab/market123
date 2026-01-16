@@ -132,6 +132,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                             title: b.title,
                             description: b.description || '',
                             imageUrl: b.image_url,
+                            heroImageUrl: b.hero_image_url || undefined,
                             linkUrl: b.link_url || '',
                             buttonText: b.button_text || '',
                             sortOrder: b.sort_order,
@@ -150,13 +151,15 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                         setSettings({
                             storeName: setData.store_name,
                             telegramUsername: setData.telegram_username,
-                            adminPassword: setData.admin_password
+                            adminPassword: setData.admin_password,
+                            bannerInterval: setData.banner_interval || 3000
                         });
                     } else {
                         setSettings({
                             storeName: 'Skyress Store',
                             telegramUsername: 'rosaalba_prof',
                             adminPassword: 'Hctm745520!)))',
+                            bannerInterval: 3000,
                         });
                     }
                 } catch (e) {
@@ -192,6 +195,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                     storeName: 'Skyress Store',
                     telegramUsername: 'rosaalba_prof',
                     adminPassword: 'Hctm745520!)))',
+                    bannerInterval: 3000
                 });
             }
         } catch (err) {
@@ -220,7 +224,8 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 id: 1,
                 store_name: 'Skyress Store',
                 telegram_username: 'rosaalba_prof',
-                admin_password: 'Hctm745520!)))'
+                admin_password: 'admin123',
+                banner_interval: 3000
             });
 
             // 2. Categories
@@ -411,7 +416,9 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             const dbSettings: Record<string, any> = {};
             if (newSettings.storeName !== undefined) dbSettings.store_name = newSettings.storeName;
             if (newSettings.telegramUsername !== undefined) dbSettings.telegram_username = newSettings.telegramUsername;
+            if (newSettings.telegramUsername !== undefined) dbSettings.telegram_username = newSettings.telegramUsername;
             if (newSettings.adminPassword !== undefined) dbSettings.admin_password = newSettings.adminPassword;
+            if (newSettings.bannerInterval !== undefined) dbSettings.banner_interval = newSettings.bannerInterval;
 
             const { error } = await supabase.from('settings').update(dbSettings).eq('id', 1);
             if (error) {
@@ -453,7 +460,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
     const addBanner = async (banner: Omit<Banner, 'id'>) => {
         if (isSupabaseConfigured && supabase) {
             const newId = `banner-${Date.now()}`;
-            const dbBanner = {
+            const dbBanner: Record<string, any> = {
                 id: newId,
                 title: banner.title,
                 description: banner.description,
@@ -463,6 +470,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 sort_order: banner.sortOrder,
                 active: banner.active
             };
+            if (banner.heroImageUrl) dbBanner.hero_image_url = banner.heroImageUrl;
             await supabase.from('banners').insert([dbBanner]);
             await refreshData();
         }
@@ -474,6 +482,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (update.title !== undefined) dbUpdate.title = update.title;
             if (update.description !== undefined) dbUpdate.description = update.description;
             if (update.imageUrl !== undefined) dbUpdate.image_url = update.imageUrl;
+            if (update.heroImageUrl !== undefined) dbUpdate.hero_image_url = update.heroImageUrl;
             if (update.linkUrl !== undefined) dbUpdate.link_url = update.linkUrl;
             if (update.buttonText !== undefined) dbUpdate.button_text = update.buttonText;
             if (update.sortOrder !== undefined) dbUpdate.sort_order = update.sortOrder;

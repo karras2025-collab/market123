@@ -30,9 +30,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Logo & Desktop Nav */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-3 transition hover:opacity-80">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600 shadow-lg shadow-primary/20">
-                <Globe className="text-white w-6 h-6" />
-              </div>
+              <img
+                src="/logo.jpg"
+                alt="Logo"
+                className="size-10 rounded-lg object-cover shadow-lg shadow-primary/20"
+              />
               <h2 className="text-xl font-bold leading-tight tracking-tight">{settings?.storeName || 'Skyress Store'}</h2>
             </Link>
 
@@ -122,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-white">
-                <Globe className="text-primary w-6 h-6" />
+                <img src="/logo.jpg" alt="Logo" className="size-8 rounded-lg object-cover" />
                 <span className="text-lg font-bold">{settings?.storeName || 'Skyress Store'}</span>
               </div>
               <p className="text-sm leading-relaxed">

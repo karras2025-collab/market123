@@ -18,6 +18,7 @@ const Settings: React.FC = () => {
     const [formData, setFormData] = useState({
         storeName: settings?.storeName || '',
         telegramUsername: settings?.telegramUsername || '',
+        bannerInterval: settings?.bannerInterval?.toString() || '3000'
     });
 
     React.useEffect(() => {
@@ -25,6 +26,7 @@ const Settings: React.FC = () => {
             setFormData({
                 storeName: settings.storeName,
                 telegramUsername: settings.telegramUsername,
+                bannerInterval: (settings.bannerInterval || 3000).toString()
             });
         }
     }, [settings]);
@@ -50,6 +52,7 @@ const Settings: React.FC = () => {
             await updateSettings({
                 storeName: formData.storeName,
                 telegramUsername: formData.telegramUsername,
+                bannerInterval: parseInt(formData.bannerInterval) || 3000
             });
             setSaveMessage({ type: 'success', text: 'Настройки сохранены!' });
         } catch (error) {
@@ -148,6 +151,24 @@ const Settings: React.FC = () => {
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
                             Без символа @. Клиенты будут переходить на t.me/{formData.telegramUsername}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Интервал смены баннеров (мс)
+                        </label>
+                        <input
+                            type="number"
+                            value={formData.bannerInterval}
+                            onChange={(e) => setFormData(prev => ({ ...prev, bannerInterval: e.target.value }))}
+                            className="w-full bg-background border border-border rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            placeholder="3000"
+                            min="1000"
+                            step="100"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">
+                            Рекомендуемое значение: 3000-5000 мс
                         </p>
                     </div>
 

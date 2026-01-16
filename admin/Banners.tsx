@@ -139,17 +139,35 @@ const Banners: React.FC = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <label className="block text-sm text-gray-400 mb-1">Изображение (1920x600 px)</label>
-                            <div className="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center min-h-[200px] relative">
+                            {/* Background Image/Video Section */}
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">Фоновое изображение или видео</label>
+                                <p className="text-xs text-gray-500 mb-2">📐 Рекомендуемое разрешение: <span className="text-primary font-medium">1920×600 px</span> (или пропорционально). Поддерживаются: JPG, PNG, WebP, GIF, MP4, WebM</p>
+                            </div>
+                            <div className="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden">
                                 {currentBanner.imageUrl ? (
-                                    <img src={currentBanner.imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg absolute inset-0 opacity-50 hover:opacity-100 transition-opacity" />
+                                    currentBanner.imageUrl.match(/\.(mp4|webm|mov)(?:\?.*)?$/i) ? (
+                                        <video
+                                            src={currentBanner.imageUrl}
+                                            className="w-full h-full object-cover rounded-lg absolute inset-0 opacity-60"
+                                            muted
+                                            loop
+                                            autoPlay
+                                            playsInline
+                                        />
+                                    ) : (
+                                        <img src={currentBanner.imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg absolute inset-0 opacity-50 hover:opacity-100 transition-opacity" />
+                                    )
                                 ) : (
-                                    <Image className="w-12 h-12 text-gray-600" />
+                                    <div className="text-center text-gray-500">
+                                        <Image className="w-10 h-10 mx-auto mb-2" />
+                                        <span className="text-xs">1920×600 px рекомендуется</span>
+                                    </div>
                                 )}
                                 <input
                                     type="file"
-                                    accept="image/*"
-                                    className="opacity-0 absolute inset-0 cursor-pointer"
+                                    accept="image/*,video/mp4,video/webm"
+                                    className="opacity-0 absolute inset-0 cursor-pointer z-20"
                                     onChange={handleImageUpload}
                                 />
                                 <div className="z-10 mt-2 pointer-events-none bg-black/50 px-3 py-1 rounded text-sm text-white">
@@ -158,9 +176,62 @@ const Banners: React.FC = () => {
                             </div>
                             <input
                                 type="text"
-                                placeholder="Или ссылка на изображение"
+                                placeholder="Или ссылка на изображение/видео"
                                 value={currentBanner.imageUrl}
                                 onChange={e => setCurrentBanner({ ...currentBanner, imageUrl: e.target.value })}
+                                className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white text-sm"
+                            />
+
+                            {/* Hero Image Section */}
+                            <div className="mt-6">
+                                <label className="block text-sm text-gray-400 mb-1">Hero изображение (отображается справа)</label>
+                                <p className="text-xs text-gray-500 mb-2">📐 Рекомендуемое разрешение: <span className="text-primary font-medium">600×600 px</span>. Лучше использовать PNG с прозрачным фоном. Поддерживаются анимированные GIF.</p>
+                            </div>
+                            <div className="border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center justify-center min-h-[150px] relative bg-gradient-to-r from-transparent to-primary/10 overflow-hidden">
+                                {currentBanner.heroImageUrl ? (
+                                    currentBanner.heroImageUrl.match(/\.(mp4|webm|mov)(?:\?.*)?$/i) ? (
+                                        <video
+                                            src={currentBanner.heroImageUrl}
+                                            className="max-h-[140px] object-contain relative z-0"
+                                            muted
+                                            loop
+                                            autoPlay
+                                            playsInline
+                                        />
+                                    ) : (
+                                        <img src={currentBanner.heroImageUrl} alt="Hero Preview" className="max-h-[140px] object-contain relative z-0" />
+                                    )
+                                ) : (
+                                    <div className="text-center text-gray-500">
+                                        <Image className="w-10 h-10 mx-auto mb-2" />
+                                        <span className="text-xs">600×600 px PNG рекомендуется</span>
+                                    </div>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*,video/mp4,video/webm"
+                                    className="opacity-0 absolute inset-0 cursor-pointer z-20"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        setIsUploading(true);
+                                        try {
+                                            const url = await uploadImage(file);
+                                            setCurrentBanner(prev => ({ ...prev, heroImageUrl: url }));
+                                        } catch (error) {
+                                            console.error('Upload failed:', error);
+                                            alert('Ошибка при загрузке');
+                                        } finally {
+                                            setIsUploading(false);
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Или ссылка на hero изображение/GIF"
+                                value={currentBanner.heroImageUrl || ''}
+                                onChange={e => setCurrentBanner({ ...currentBanner, heroImageUrl: e.target.value })}
                                 className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white text-sm"
                             />
                         </div>
