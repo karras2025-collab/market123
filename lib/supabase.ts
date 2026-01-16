@@ -56,4 +56,5 @@ export interface DbSettings {
   store_name: string;
   telegram_username: string;
   admin_password: string;
+  admin_password_hash?: string;
 }

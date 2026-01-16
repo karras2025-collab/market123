@@ -63,11 +63,30 @@ const Settings: React.FC = () => {
         setTimeout(() => setSaveMessage(null), 3000);
     };
 
+    // SHA-256 hash function
+    const hashPassword = async (password: string): Promise<string> => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setPasswordMessage(null);
 
-        if (passwordForm.currentPassword !== settings?.adminPassword) {
+        // Verify current password by hashing and comparing
+        const currentHash = await hashPassword(passwordForm.currentPassword);
+        const storedHash = settings?.adminPasswordHash;
+        const storedPlain = settings?.adminPassword;
+
+        // Support both hashed and plain passwords for migration
+        const isValidCurrent = storedHash
+            ? currentHash === storedHash
+            : passwordForm.currentPassword === storedPlain;
+
+        if (!isValidCurrent) {
             setPasswordMessage({ type: 'error', text: 'Неверный текущий пароль' });
             return;
         }
@@ -85,8 +104,13 @@ const Settings: React.FC = () => {
         setIsChangingPassword(true);
 
         try {
-            await updateSettings({ adminPassword: passwordForm.newPassword });
-            setPasswordMessage({ type: 'success', text: 'Пароль изменён!' });
+            // Hash the new password before saving
+            const newPasswordHash = await hashPassword(passwordForm.newPassword);
+            await updateSettings({
+                adminPasswordHash: newPasswordHash,
+                adminPassword: '' // Clear plain password
+            });
+            setPasswordMessage({ type: 'success', text: 'Пароль изменён! (хешированный)' });
             setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (error) {
             setPasswordMessage({ type: 'error', text: 'Ошибка изменения пароля' });

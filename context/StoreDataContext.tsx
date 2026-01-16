@@ -151,14 +151,15 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                         setSettings({
                             storeName: setData.store_name,
                             telegramUsername: setData.telegram_username,
-                            adminPassword: setData.admin_password,
+                            adminPassword: setData.admin_password || '',
+                            adminPasswordHash: setData.admin_password_hash || undefined,
                             bannerInterval: setData.banner_interval || 3000
                         });
                     } else {
                         setSettings({
-                            storeName: 'Skyress Store',
-                            telegramUsername: 'rosaalba_prof',
-                            adminPassword: 'Hctm745520!)))',
+                            storeName: 'Digi Deal',
+                            telegramUsername: 'digideal_support',
+                            adminPassword: '',
                             bannerInterval: 3000,
                         });
                     }
@@ -192,9 +193,9 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 const storedSettings = localStorage.getItem(STORAGE_KEYS.settings);
                 if (storedSettings) setSettings(prev => ({ ...prev, ...JSON.parse(storedSettings) }));
                 else setSettings({
-                    storeName: 'Skyress Store',
-                    telegramUsername: 'rosaalba_prof',
-                    adminPassword: 'Hctm745520!)))',
+                    storeName: 'Digi Deal',
+                    telegramUsername: 'digideal_support',
+                    adminPassword: '',
                     bannerInterval: 3000
                 });
             }
@@ -222,9 +223,10 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             // 1. Settings
             await supabase.from('settings').upsert({
                 id: 1,
-                store_name: 'Skyress Store',
-                telegram_username: 'rosaalba_prof',
-                admin_password: 'admin123',
+                store_name: 'Digi Deal',
+                telegram_username: 'digideal_support',
+                admin_password: '',
+                admin_password_hash: '',
                 banner_interval: 3000
             });
 
@@ -418,6 +420,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (newSettings.telegramUsername !== undefined) dbSettings.telegram_username = newSettings.telegramUsername;
             if (newSettings.telegramUsername !== undefined) dbSettings.telegram_username = newSettings.telegramUsername;
             if (newSettings.adminPassword !== undefined) dbSettings.admin_password = newSettings.adminPassword;
+            if (newSettings.adminPasswordHash !== undefined) dbSettings.admin_password_hash = newSettings.adminPasswordHash;
             if (newSettings.bannerInterval !== undefined) dbSettings.banner_interval = newSettings.bannerInterval;
 
             const { error } = await supabase.from('settings').update(dbSettings).eq('id', 1);
@@ -427,7 +430,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             }
             await refreshData();
         } else {
-            const updated = { ...settings, ...newSettings };
+            const updated = { ...settings, ...newSettings } as StoreSettings;
             setSettings(updated);
             localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(updated));
         }

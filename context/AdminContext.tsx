@@ -1,14 +1,77 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
+// Security constants
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_STORAGE_KEY = 'admin_lockout';
+const ATTEMPTS_STORAGE_KEY = 'admin_login_attempts';
+
 interface AdminContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (password: string) => Promise<boolean>;
+    login: (password: string) => Promise<{ success: boolean; error?: string; lockoutEnd?: number }>;
     logout: () => void;
+    getLockoutInfo: () => { isLocked: boolean; remainingMs: number; attempts: number };
+}
+
+interface LockoutData {
+    attempts: number;
+    lockoutEnd: number | null;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
+
+// SHA-256 hash function (browser native)
+async function hashPassword(password: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Get client fingerprint for logging (hashed for privacy)
+async function getClientFingerprint(): Promise<string> {
+    const fp = [
+        navigator.userAgent,
+        navigator.language,
+        new Date().getTimezoneOffset().toString(),
+        screen.width + 'x' + screen.height
+    ].join('|');
+    return hashPassword(fp);
+}
+
+// Get lockout data from localStorage
+function getLockoutData(): LockoutData {
+    try {
+        const stored = localStorage.getItem(LOCKOUT_STORAGE_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) { }
+    return { attempts: 0, lockoutEnd: null };
+}
+
+// Save lockout data to localStorage
+function saveLockoutData(data: LockoutData): void {
+    localStorage.setItem(LOCKOUT_STORAGE_KEY, JSON.stringify(data));
+}
+
+// Log login attempt to Supabase
+async function logLoginAttempt(success: boolean): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    try {
+        const ipHash = await getClientFingerprint();
+        await supabase.from('login_attempts').insert({
+            ip_hash: ipHash,
+            success: success
+        });
+    } catch (err) {
+        console.error('Failed to log login attempt:', err);
+    }
+}
 
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,15 +86,48 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setIsLoading(false);
     }, []);
 
-    const login = async (password: string): Promise<boolean> => {
-        let adminPassword = 'Hctm745520!)))';
+    const getLockoutInfo = (): { isLocked: boolean; remainingMs: number; attempts: number } => {
+        const data = getLockoutData();
+        const now = Date.now();
+
+        if (data.lockoutEnd && data.lockoutEnd > now) {
+            return {
+                isLocked: true,
+                remainingMs: data.lockoutEnd - now,
+                attempts: data.attempts
+            };
+        }
+
+        // Reset if lockout expired
+        if (data.lockoutEnd && data.lockoutEnd <= now) {
+            saveLockoutData({ attempts: 0, lockoutEnd: null });
+            return { isLocked: false, remainingMs: 0, attempts: 0 };
+        }
+
+        return { isLocked: false, remainingMs: 0, attempts: data.attempts };
+    };
+
+    const login = async (password: string): Promise<{ success: boolean; error?: string; lockoutEnd?: number }> => {
+        // Check lockout first
+        const lockoutInfo = getLockoutInfo();
+        if (lockoutInfo.isLocked) {
+            return {
+                success: false,
+                error: 'Слишком много попыток. Подождите.',
+                lockoutEnd: getLockoutData().lockoutEnd || undefined
+            };
+        }
+
+        let storedPasswordHash: string | null = null;
+        let storedPasswordPlain: string | null = null;
 
         // Try to get password from Supabase
         if (isSupabaseConfigured && supabase) {
             try {
-                const { data } = await supabase.from('settings').select('admin_password').single();
-                if (data && data.admin_password) {
-                    adminPassword = data.admin_password;
+                const { data } = await supabase.from('settings').select('admin_password, admin_password_hash').single();
+                if (data) {
+                    storedPasswordHash = data.admin_password_hash || null;
+                    storedPasswordPlain = data.admin_password || null;
                 }
             } catch (err) {
                 console.error('Failed to fetch admin password from DB:', err);
@@ -42,19 +138,61 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             if (storedSettings) {
                 try {
                     const settings = JSON.parse(storedSettings);
-                    if (settings.adminPassword) {
-                        adminPassword = settings.adminPassword;
-                    }
+                    storedPasswordHash = settings.adminPasswordHash || null;
+                    storedPasswordPlain = settings.adminPassword || null;
                 } catch (e) { }
             }
         }
 
-        if (password === adminPassword) {
+        // Hash the input password
+        const inputHash = await hashPassword(password);
+
+        // Check password (support both hashed and plain for migration)
+        let isValid = false;
+
+        if (storedPasswordHash) {
+            // Compare hashes
+            isValid = inputHash === storedPasswordHash;
+        } else if (storedPasswordPlain) {
+            // Legacy: compare with plain password, then migrate
+            isValid = password === storedPasswordPlain;
+        }
+
+        if (isValid) {
+            // Success - reset attempts and log
+            saveLockoutData({ attempts: 0, lockoutEnd: null });
+            await logLoginAttempt(true);
+
             setIsAuthenticated(true);
             sessionStorage.setItem('admin_authenticated', 'true');
-            return true;
+            return { success: true };
         }
-        return false;
+
+        // Failed attempt
+        const currentData = getLockoutData();
+        const newAttempts = currentData.attempts + 1;
+
+        await logLoginAttempt(false);
+
+        if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+            // Lock out
+            const lockoutEnd = Date.now() + LOCKOUT_DURATION_MS;
+            saveLockoutData({ attempts: newAttempts, lockoutEnd });
+            return {
+                success: false,
+                error: `Превышен лимит попыток. Блокировка на 15 минут.`,
+                lockoutEnd
+            };
+        }
+
+        // Save attempt count
+        saveLockoutData({ attempts: newAttempts, lockoutEnd: null });
+
+        const remaining = MAX_LOGIN_ATTEMPTS - newAttempts;
+        return {
+            success: false,
+            error: `Неверный пароль. Осталось попыток: ${remaining}`
+        };
     };
 
     const logout = () => {
@@ -63,7 +201,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     return (
-        <AdminContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+        <AdminContext.Provider value={{ isAuthenticated, isLoading, login, logout, getLockoutInfo }}>
             {children}
         </AdminContext.Provider>
     );

@@ -65,6 +65,7 @@ export interface StoreSettings {
   storeName: string;
   telegramUsername: string;
   adminPassword: string;
+  adminPasswordHash?: string; // SHA-256 hash of password
   bannerInterval?: number; // ms, default 3000
 }
 
