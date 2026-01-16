@@ -5,7 +5,6 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_STORAGE_KEY = 'admin_lockout';
-const ATTEMPTS_STORAGE_KEY = 'admin_login_attempts';
 
 interface AdminContextType {
     isAuthenticated: boolean;
@@ -73,6 +72,30 @@ async function logLoginAttempt(success: boolean): Promise<void> {
     }
 }
 
+// SERVER-SIDE password verification via Supabase RPC
+// Password is NEVER loaded to the client!
+async function verifyPasswordOnServer(passwordHash: string): Promise<boolean> {
+    if (!isSupabaseConfigured || !supabase) {
+        return false;
+    }
+
+    try {
+        const { data, error } = await supabase.rpc('verify_admin_password', {
+            input_hash: passwordHash
+        });
+
+        if (error) {
+            console.error('RPC error:', error);
+            return false;
+        }
+
+        return data === true;
+    } catch (err) {
+        console.error('Failed to verify password on server:', err);
+        return false;
+    }
+}
+
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -118,44 +141,27 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             };
         }
 
-        let storedPasswordHash: string | null = null;
-        let storedPasswordPlain: string | null = null;
+        // Hash password on client BEFORE sending
+        const inputHash = await hashPassword(password);
 
-        // Try to get password from Supabase
+        // Verify on SERVER - password/hash is NEVER returned to client!
+        let isValid = false;
+
         if (isSupabaseConfigured && supabase) {
-            try {
-                const { data } = await supabase.from('settings').select('admin_password, admin_password_hash').single();
-                if (data) {
-                    storedPasswordHash = data.admin_password_hash || null;
-                    storedPasswordPlain = data.admin_password || null;
-                }
-            } catch (err) {
-                console.error('Failed to fetch admin password from DB:', err);
-            }
+            isValid = await verifyPasswordOnServer(inputHash);
         } else {
-            // Fallback to localStorage
+            // LocalStorage fallback (less secure, for dev only)
             const storedSettings = localStorage.getItem('store_settings');
             if (storedSettings) {
                 try {
                     const settings = JSON.parse(storedSettings);
-                    storedPasswordHash = settings.adminPasswordHash || null;
-                    storedPasswordPlain = settings.adminPassword || null;
+                    if (settings.adminPasswordHash) {
+                        isValid = inputHash === settings.adminPasswordHash;
+                    } else if (settings.adminPassword) {
+                        isValid = password === settings.adminPassword;
+                    }
                 } catch (e) { }
             }
-        }
-
-        // Hash the input password
-        const inputHash = await hashPassword(password);
-
-        // Check password (support both hashed and plain for migration)
-        let isValid = false;
-
-        if (storedPasswordHash) {
-            // Compare hashes
-            isValid = inputHash === storedPasswordHash;
-        } else if (storedPasswordPlain) {
-            // Legacy: compare with plain password, then migrate
-            isValid = password === storedPasswordPlain;
         }
 
         if (isValid) {
