@@ -16,6 +16,9 @@ const ProductDetailsPage: React.FC = () => {
 
   // Set default variant safely - MUST be before any conditional returns (Rules of Hooks)
   useEffect(() => {
+    // Scroll to top on page load (fix for mobile)
+    window.scrollTo(0, 0);
+
     if (product && product.variants.length > 0 && !selectedVariantId) {
       setSelectedVariantId(product.variants[0].id);
     }

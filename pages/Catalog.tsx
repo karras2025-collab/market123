@@ -12,6 +12,9 @@ const CatalogPage: React.FC = () => {
 
   // Parse query params for initial category
   useEffect(() => {
+    // Scroll to top on page load (fix for mobile)
+    window.scrollTo(0, 0);
+
     const params = new URLSearchParams(location.search);
     const cat = params.get('category');
     if (cat) setSelectedCategory(cat);
