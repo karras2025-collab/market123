@@ -155,7 +155,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
-                  support@skyress.store
+                  atrkk2024@gmail.com
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-bold">TG</span>
