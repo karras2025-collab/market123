@@ -143,16 +143,18 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                     console.error('Error loading banners:', e);
                 }
 
-                // 5. Settings
+                // 5. Settings (NEVER load admin_password to client!)
                 try {
-                    const { data: setData, error: setError } = await supabase.from('settings').select('*').single();
+                    const { data: setData, error: setError } = await supabase
+                        .from('settings')
+                        .select('store_name, telegram_username, banner_interval')
+                        .single();
                     if (setError && setError.code !== 'PGRST116') throw setError; // PGRST116 is 'no rows'
                     if (setData) {
                         setSettings({
                             storeName: setData.store_name,
                             telegramUsername: setData.telegram_username,
-                            adminPassword: setData.admin_password || '',
-                            adminPasswordHash: setData.admin_password_hash || undefined,
+                            adminPassword: '', // Never loaded from server
                             bannerInterval: setData.banner_interval || 3000
                         });
                     } else {
