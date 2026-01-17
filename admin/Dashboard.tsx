@@ -20,28 +20,28 @@ const Dashboard: React.FC = () => {
             value: products.length,
             icon: Package,
             color: 'blue',
-            link: '/panel-x7k9/products'
+            link: '/manage-zq84fk/products'
         },
         {
             label: 'Категории',
             value: categories.length,
             icon: FolderOpen,
             color: 'purple',
-            link: '/panel-x7k9/categories'
+            link: '/manage-zq84fk/categories'
         },
         {
             label: 'Заказы',
             value: orders.length,
             icon: ShoppingBag,
             color: 'green',
-            link: '/panel-x7k9/orders'
+            link: '/manage-zq84fk/orders'
         },
         {
             label: 'Ожидают',
             value: orders.filter(o => o.status === 'pending').length,
             icon: Clock,
             color: 'orange',
-            link: '/panel-x7k9/orders'
+            link: '/manage-zq84fk/orders'
         },
     ];
 
@@ -114,21 +114,21 @@ const Dashboard: React.FC = () => {
                     <h2 className="text-lg font-bold text-white mb-4">Быстрые действия</h2>
                     <div className="space-y-3">
                         <Link
-                            to="/panel-x7k9/products/new"
+                            to="/manage-zq84fk/products/new"
                             className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all"
                         >
                             <Plus className="w-5 h-5" />
                             <span className="font-medium">Добавить товар</span>
                         </Link>
                         <Link
-                            to="/panel-x7k9/categories"
+                            to="/manage-zq84fk/categories"
                             className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-border text-gray-300 hover:bg-white/10 hover:text-white transition-all"
                         >
                             <FolderOpen className="w-5 h-5" />
                             <span className="font-medium">Управление категориями</span>
                         </Link>
                         <Link
-                            to="/panel-x7k9/orders"
+                            to="/manage-zq84fk/orders"
                             className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-border text-gray-300 hover:bg-white/10 hover:text-white transition-all"
                         >
                             <ShoppingBag className="w-5 h-5" />
@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-surface border border-border rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-white">Последние заказы</h2>
-                        <Link to="/panel-x7k9/orders" className="text-sm text-primary hover:text-blue-400 flex items-center gap-1">
+                        <Link to="/manage-zq84fk/orders" className="text-sm text-primary hover:text-blue-400 flex items-center gap-1">
                             Все заказы <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>

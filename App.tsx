@@ -47,13 +47,13 @@ function App() {
               <Route path="/catalog/:id" element={<Layout><CatalogProductRedirect /></Layout>} />
               <Route path="/cart" element={<Layout><CartPage /></Layout>} />
 
-              {/* Admin Routes - Secret URL */}
-              <Route path="/panel-x7k9/login" element={
+              {/* Admin Routes - Secret URL (DO NOT share publicly!) */}
+              <Route path="/manage-zq84fk/login" element={
                 <Suspense fallback={<AdminLoader />}>
                   <AdminLogin />
                 </Suspense>
               } />
-              <Route path="/panel-x7k9" element={
+              <Route path="/manage-zq84fk" element={
                 <Suspense fallback={<AdminLoader />}>
                   <AdminLayout />
                 </Suspense>

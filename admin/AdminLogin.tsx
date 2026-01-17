@@ -59,7 +59,7 @@ const AdminLogin: React.FC = () => {
     }, [lockoutEnd]);
 
     if (isAuthenticated) {
-        return <Navigate to="/panel-x7k9" replace />;
+        return <Navigate to="/manage-zq84fk" replace />;
     }
 
     const handlePasswordSubmit = async (e: React.FormEvent) => {

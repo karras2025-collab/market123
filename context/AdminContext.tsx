@@ -7,9 +7,8 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_STORAGE_KEY = 'admin_lockout';
 const CODE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
-// Telegram config
-const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || '';
+// NOTE: Telegram tokens are now stored securely in Supabase Edge Function secrets
+// No longer exposed in client-side code
 
 interface AdminContextType {
     isAuthenticated: boolean;
@@ -112,34 +111,30 @@ function generateCode(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Send code via Telegram
+// Send code via Supabase RPC function (secure - token hidden in database)
 async function sendTelegramCode(code: string): Promise<boolean> {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        console.error('Telegram not configured');
+    if (!isSupabaseConfigured || !supabase) {
+        console.error('Supabase not configured');
         return false;
     }
 
     try {
-        const message = `🔐 Код для входа в админ-панель: ${code}\n\n⏱️ Действителен 5 минут.`;
-        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: message,
-                parse_mode: 'HTML'
-            })
+        const { data, error } = await supabase.rpc('send_telegram_2fa', {
+            code: code
         });
 
-        const result = await response.json();
-        return result.ok === true;
+        if (error) {
+            console.error('RPC error:', error);
+            return false;
+        }
+
+        return data === true;
     } catch (err) {
         console.error('Failed to send Telegram message:', err);
         return false;
     }
 }
+
 
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);

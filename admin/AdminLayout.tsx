@@ -26,16 +26,16 @@ const AdminLayout: React.FC = () => {
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/panel-x7k9/login" replace />;
+        return <Navigate to="/manage-zq84fk/login" replace />;
     }
 
     const navItems = [
-        { path: '/panel-x7k9', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-        { path: '/panel-x7k9/products', icon: Package, label: 'Товары' },
-        { path: '/panel-x7k9/categories', icon: FolderOpen, label: 'Категории' },
-        { path: '/panel-x7k9/banners', icon: Image, label: 'Баннеры' },
-        { path: '/panel-x7k9/orders', icon: ShoppingBag, label: 'Заказы' },
-        { path: '/panel-x7k9/settings', icon: Settings, label: 'Настройки' },
+        { path: '/manage-zq84fk', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+        { path: '/manage-zq84fk/products', icon: Package, label: 'Товары' },
+        { path: '/manage-zq84fk/categories', icon: FolderOpen, label: 'Категории' },
+        { path: '/manage-zq84fk/banners', icon: Image, label: 'Баннеры' },
+        { path: '/manage-zq84fk/orders', icon: ShoppingBag, label: 'Заказы' },
+        { path: '/manage-zq84fk/settings', icon: Settings, label: 'Настройки' },
     ];
 
     const isActive = (path: string, exact?: boolean) => {
@@ -49,7 +49,7 @@ const AdminLayout: React.FC = () => {
             <aside className="w-64 bg-surface border-r border-border flex flex-col">
                 {/* Logo */}
                 <div className="p-6 border-b border-border">
-                    <Link to="/panel-x7k9" className="flex items-center gap-3">
+                    <Link to="/manage-zq84fk" className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
                             <Store className="w-5 h-5 text-white" />
                         </div>

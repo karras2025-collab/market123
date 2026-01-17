@@ -74,7 +74,7 @@ const ProductForm: React.FC = () => {
             } else {
                 await addProduct(productData);
             }
-            navigate('/panel-x7k9/products');
+            navigate('/manage-zq84fk/products');
         } catch (error) {
             console.error('Error saving product:', error);
             alert('Ошибка при сохранении товара');
@@ -152,7 +152,7 @@ const ProductForm: React.FC = () => {
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <button
-                    onClick={() => navigate('/panel-x7k9/products')}
+                    onClick={() => navigate('/manage-zq84fk/products')}
                     className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 >
                     <ArrowLeft className="w-6 h-6" />
@@ -442,7 +442,7 @@ const ProductForm: React.FC = () => {
                 <div className="flex items-center justify-end gap-4">
                     <button
                         type="button"
-                        onClick={() => navigate('/panel-x7k9/products')}
+                        onClick={() => navigate('/manage-zq84fk/products')}
                         className="px-6 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors font-medium"
                     >
                         Отмена
