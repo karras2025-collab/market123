@@ -64,7 +64,7 @@ const CartPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const telegramLink = `https://t.me/${settings?.telegramUsername || 'skyress_support'}`;
+  const telegramLink = `https://t.me/${settings?.telegramUsername || 'rosaalba_prof'}`;
 
   // --- Success View ---
   if (isSuccess) {
@@ -209,7 +209,7 @@ const CartPage: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-gray-500 text-center mt-2">
-                    Нажмите "Открыть Telegram" для перехода к @{settings?.telegramUsername || 'skyress_support'}. Вставьте скопированное сообщение.
+                    Нажмите "Открыть Telegram" для перехода к @{settings?.telegramUsername || 'rosaalba_prof'}. Вставьте скопированное сообщение.
                   </p>
                 </div>
               )}

@@ -147,7 +147,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-bold">TG</span>
-                  @{settings?.telegramUsername || 'skyress_support'}
+                  @{settings?.telegramUsername || 'rosaalba_prof'}
                 </li>
               </ul>
             </div>
