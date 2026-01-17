@@ -149,7 +149,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     useEffect(() => {
         // Check if already logged in from session
-        const storedAuth = sessionStorage.getItem('admin_authenticated');
+        const storedAuth = sessionStorage.getItem('admin_session_v2');
         if (storedAuth === 'true') {
             setIsAuthenticated(true);
         }
@@ -282,7 +282,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setIsAuthenticated(true);
         setPending2FA(false);
         setPending2FAData(null);
-        sessionStorage.setItem('admin_authenticated', 'true');
+        sessionStorage.setItem('admin_session_v2', 'true');
 
         return { success: true };
     };
@@ -291,7 +291,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setIsAuthenticated(false);
         setPending2FA(false);
         setPending2FAData(null);
-        sessionStorage.removeItem('admin_authenticated');
+        sessionStorage.removeItem('admin_session_v2');
     };
 
     return (
