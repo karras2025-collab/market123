@@ -5,11 +5,18 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_STORAGE_KEY = 'admin_lockout';
+const CODE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+
+// Telegram config
+const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || '';
 
 interface AdminContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (password: string) => Promise<{ success: boolean; error?: string; lockoutEnd?: number }>;
+    pending2FA: boolean;
+    login: (password: string) => Promise<{ success: boolean; error?: string; lockoutEnd?: number; needs2FA?: boolean }>;
+    verify2FA: (code: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
     getLockoutInfo: () => { isLocked: boolean; remainingMs: number; attempts: number };
 }
@@ -17,6 +24,11 @@ interface AdminContextType {
 interface LockoutData {
     attempts: number;
     lockoutEnd: number | null;
+}
+
+interface Pending2FAData {
+    code: string;
+    expiresAt: number;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -73,7 +85,6 @@ async function logLoginAttempt(success: boolean): Promise<void> {
 }
 
 // SERVER-SIDE password verification via Supabase RPC
-// Password is NEVER loaded to the client!
 async function verifyPasswordOnServer(passwordHash: string): Promise<boolean> {
     if (!isSupabaseConfigured || !supabase) {
         return false;
@@ -96,9 +107,45 @@ async function verifyPasswordOnServer(passwordHash: string): Promise<boolean> {
     }
 }
 
+// Generate 6-digit code
+function generateCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Send code via Telegram
+async function sendTelegramCode(code: string): Promise<boolean> {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.error('Telegram not configured');
+        return false;
+    }
+
+    try {
+        const message = `🔐 Код для входа в админ-панель: ${code}\n\n⏱️ Действителен 5 минут.`;
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        });
+
+        const result = await response.json();
+        return result.ok === true;
+    } catch (err) {
+        console.error('Failed to send Telegram message:', err);
+        return false;
+    }
+}
+
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [pending2FA, setPending2FA] = useState(false);
+    const [pending2FAData, setPending2FAData] = useState<Pending2FAData | null>(null);
 
     useEffect(() => {
         // Check if already logged in from session
@@ -130,7 +177,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return { isLocked: false, remainingMs: 0, attempts: data.attempts };
     };
 
-    const login = async (password: string): Promise<{ success: boolean; error?: string; lockoutEnd?: number }> => {
+    const login = async (password: string): Promise<{ success: boolean; error?: string; lockoutEnd?: number; needs2FA?: boolean }> => {
         // Check lockout first
         const lockoutInfo = getLockoutInfo();
         if (lockoutInfo.isLocked) {
@@ -144,7 +191,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // Hash password on client BEFORE sending
         const inputHash = await hashPassword(password);
 
-        // Verify on SERVER - password/hash is NEVER returned to client!
+        // Verify on SERVER
         let isValid = false;
 
         if (isSupabaseConfigured && supabase) {
@@ -165,13 +212,25 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
 
         if (isValid) {
-            // Success - reset attempts and log
-            saveLockoutData({ attempts: 0, lockoutEnd: null });
-            await logLoginAttempt(true);
+            // Password correct - now send 2FA code
+            const code = generateCode();
+            const sent = await sendTelegramCode(code);
 
-            setIsAuthenticated(true);
-            sessionStorage.setItem('admin_authenticated', 'true');
-            return { success: true };
+            if (!sent) {
+                return {
+                    success: false,
+                    error: 'Не удалось отправить код в Telegram. Проверьте настройки бота.'
+                };
+            }
+
+            // Store pending 2FA
+            setPending2FAData({
+                code: code,
+                expiresAt: Date.now() + CODE_EXPIRY_MS
+            });
+            setPending2FA(true);
+
+            return { success: false, needs2FA: true };
         }
 
         // Failed attempt
@@ -181,7 +240,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await logLoginAttempt(false);
 
         if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
-            // Lock out
             const lockoutEnd = Date.now() + LOCKOUT_DURATION_MS;
             saveLockoutData({ attempts: newAttempts, lockoutEnd });
             return {
@@ -191,7 +249,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             };
         }
 
-        // Save attempt count
         saveLockoutData({ attempts: newAttempts, lockoutEnd: null });
 
         const remaining = MAX_LOGIN_ATTEMPTS - newAttempts;
@@ -201,13 +258,44 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         };
     };
 
+    const verify2FA = async (code: string): Promise<{ success: boolean; error?: string }> => {
+        if (!pending2FAData) {
+            return { success: false, error: 'Сессия истекла. Начните заново.' };
+        }
+
+        // Check expiry
+        if (Date.now() > pending2FAData.expiresAt) {
+            setPending2FA(false);
+            setPending2FAData(null);
+            return { success: false, error: 'Код истёк. Попробуйте войти снова.' };
+        }
+
+        // Verify code
+        if (code !== pending2FAData.code) {
+            return { success: false, error: 'Неверный код.' };
+        }
+
+        // Success!
+        saveLockoutData({ attempts: 0, lockoutEnd: null });
+        await logLoginAttempt(true);
+
+        setIsAuthenticated(true);
+        setPending2FA(false);
+        setPending2FAData(null);
+        sessionStorage.setItem('admin_authenticated', 'true');
+
+        return { success: true };
+    };
+
     const logout = () => {
         setIsAuthenticated(false);
+        setPending2FA(false);
+        setPending2FAData(null);
         sessionStorage.removeItem('admin_authenticated');
     };
 
     return (
-        <AdminContext.Provider value={{ isAuthenticated, isLoading, login, logout, getLockoutInfo }}>
+        <AdminContext.Provider value={{ isAuthenticated, isLoading, pending2FA, login, verify2FA, logout, getLockoutInfo }}>
             {children}
         </AdminContext.Provider>
     );

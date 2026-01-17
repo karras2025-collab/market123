@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { Lock, Eye, EyeOff, AlertCircle, Store, Clock } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, Store, Clock, Shield, MessageCircle } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
-    const { isAuthenticated, login, getLockoutInfo } = useAdmin();
+    const { isAuthenticated, login, verify2FA, pending2FA, getLockoutInfo } = useAdmin();
     const [password, setPassword] = useState('');
+    const [code, setCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -61,14 +62,14 @@ const AdminLogin: React.FC = () => {
         return <Navigate to="/panel-x7k9" replace />;
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
         const result = await login(password);
 
-        if (!result.success) {
+        if (!result.success && !result.needs2FA) {
             setError(result.error || 'Ошибка входа');
             if (result.lockoutEnd) {
                 setLockoutEnd(result.lockoutEnd);
@@ -77,6 +78,20 @@ const AdminLogin: React.FC = () => {
 
         setIsLoading(false);
         setPassword('');
+    };
+
+    const handleCodeSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        const result = await verify2FA(code);
+
+        if (!result.success) {
+            setError(result.error || 'Ошибка проверки кода');
+        }
+
+        setIsLoading(false);
     };
 
     const isLocked = lockoutEnd !== null && lockoutEnd > Date.now();
@@ -110,8 +125,72 @@ const AdminLogin: React.FC = () => {
                                 Попробуйте снова через несколько минут
                             </p>
                         </div>
+                    ) : pending2FA ? (
+                        /* 2FA Code Entry */
+                        <div>
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                                    <MessageCircle className="w-8 h-8 text-green-400" />
+                                </div>
+                                <h2 className="text-xl font-bold text-white mb-2">Проверка в Telegram</h2>
+                                <p className="text-gray-400 text-sm">
+                                    Код отправлен в Telegram.<br />Введите его ниже.
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleCodeSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                        6-значный код
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <Shield className="w-5 h-5" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={code}
+                                            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                            placeholder="000000"
+                                            className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-white text-center text-2xl font-mono tracking-widest placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                                            required
+                                            disabled={isLoading}
+                                            maxLength={6}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || code.length !== 6}
+                                    className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isLoading ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Shield className="w-5 h-5" />
+                                            Подтвердить
+                                        </>
+                                    )}
+                                </button>
+
+                                <p className="text-center text-gray-500 text-xs">
+                                    Код действителен 5 минут
+                                </p>
+                            </form>
+                        </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        /* Password Entry */
+                        <form onSubmit={handlePasswordSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
                                     Пароль
@@ -162,7 +241,7 @@ const AdminLogin: React.FC = () => {
                 </div>
 
                 <p className="text-center text-gray-500 text-sm mt-6">
-                    Забыли пароль? Обратитесь к администратору.
+                    🔐 Двухфакторная аутентификация
                 </p>
             </div>
         </div>
