@@ -51,7 +51,7 @@ const Products: React.FC = () => {
                     <p className="text-gray-400">Управление каталогом товаров ({products.length})</p>
                 </div>
                 <Link
-                    to="/admin/products/new"
+                    to="/panel-x7k9/products/new"
                     className="flex items-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20"
                 >
                     <Plus className="w-5 h-5" />
@@ -94,7 +94,7 @@ const Products: React.FC = () => {
                             : 'Добавьте первый товар в каталог'}
                     </p>
                     <Link
-                        to="/admin/products/new"
+                        to="/panel-x7k9/products/new"
                         className="inline-flex items-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-all"
                     >
                         <Plus className="w-5 h-5" />
@@ -163,7 +163,7 @@ const Products: React.FC = () => {
                                                 <Eye className="w-5 h-5" />
                                             </Link>
                                             <Link
-                                                to={`/admin/products/${product.id}`}
+                                                to={`/panel-x7k9/products/${product.id}`}
                                                 className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
                                                 title="Редактировать"
                                             >

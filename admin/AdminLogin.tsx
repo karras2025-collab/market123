@@ -58,7 +58,7 @@ const AdminLogin: React.FC = () => {
     }, [lockoutEnd]);
 
     if (isAuthenticated) {
-        return <Navigate to="/admin" replace />;
+        return <Navigate to="/panel-x7k9" replace />;
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

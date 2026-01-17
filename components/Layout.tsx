@@ -72,13 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </span>
                 )}
               </Link>
-              <Link
-                to="/admin"
-                className="hidden sm:flex size-10 items-center justify-center rounded-lg bg-surface transition hover:bg-white/10 hover:text-primary border border-border"
-                title="Админ-панель"
-              >
-                <Settings className="w-5 h-5" />
-              </Link>
+
               <button
                 className="md:hidden flex size-10 items-center justify-center rounded-lg bg-surface border border-border"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -102,13 +96,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {link.name}
               </Link>
             ))}
-            <Link
-              to="/admin"
-              className="text-base font-medium text-gray-300 hover:text-primary py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Админ-панель
-            </Link>
+
           </div>
         )}
       </header>

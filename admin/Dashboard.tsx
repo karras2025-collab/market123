@@ -20,28 +20,28 @@ const Dashboard: React.FC = () => {
             value: products.length,
             icon: Package,
             color: 'blue',
-            link: '/admin/products'
+            link: '/panel-x7k9/products'
         },
         {
             label: 'Категории',
             value: categories.length,
             icon: FolderOpen,
             color: 'purple',
-            link: '/admin/categories'
+            link: '/panel-x7k9/categories'
         },
         {
             label: 'Заказы',
             value: orders.length,
             icon: ShoppingBag,
             color: 'green',
-            link: '/admin/orders'
+            link: '/panel-x7k9/orders'
         },
         {
             label: 'Ожидают',
             value: orders.filter(o => o.status === 'pending').length,
             icon: Clock,
             color: 'orange',
-            link: '/admin/orders'
+            link: '/panel-x7k9/orders'
         },
     ];
 
@@ -93,9 +93,9 @@ const Dashboard: React.FC = () => {
                     >
                         <div className="flex items-start justify-between mb-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
-                                    stat.color === 'purple' ? 'bg-purple-500/10 text-purple-400' :
-                                        stat.color === 'green' ? 'bg-green-500/10 text-green-400' :
-                                            'bg-orange-500/10 text-orange-400'
+                                stat.color === 'purple' ? 'bg-purple-500/10 text-purple-400' :
+                                    stat.color === 'green' ? 'bg-green-500/10 text-green-400' :
+                                        'bg-orange-500/10 text-orange-400'
                                 }`}>
                                 <stat.icon className="w-6 h-6" />
                             </div>
@@ -114,21 +114,21 @@ const Dashboard: React.FC = () => {
                     <h2 className="text-lg font-bold text-white mb-4">Быстрые действия</h2>
                     <div className="space-y-3">
                         <Link
-                            to="/admin/products/new"
+                            to="/panel-x7k9/products/new"
                             className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all"
                         >
                             <Plus className="w-5 h-5" />
                             <span className="font-medium">Добавить товар</span>
                         </Link>
                         <Link
-                            to="/admin/categories"
+                            to="/panel-x7k9/categories"
                             className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-border text-gray-300 hover:bg-white/10 hover:text-white transition-all"
                         >
                             <FolderOpen className="w-5 h-5" />
                             <span className="font-medium">Управление категориями</span>
                         </Link>
                         <Link
-                            to="/admin/orders"
+                            to="/panel-x7k9/orders"
                             className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-border text-gray-300 hover:bg-white/10 hover:text-white transition-all"
                         >
                             <ShoppingBag className="w-5 h-5" />
@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-surface border border-border rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-white">Последние заказы</h2>
-                        <Link to="/admin/orders" className="text-sm text-primary hover:text-blue-400 flex items-center gap-1">
+                        <Link to="/panel-x7k9/orders" className="text-sm text-primary hover:text-blue-400 flex items-center gap-1">
                             Все заказы <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
