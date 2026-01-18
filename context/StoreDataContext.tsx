@@ -160,7 +160,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                     } else {
                         setSettings({
                             storeName: 'Digi Deal',
-                            telegramUsername: 'digideal_support',
+                            telegramUsername: 'RosaAlba_Prof',
                             adminPassword: '',
                             bannerInterval: 3000,
                         });
@@ -196,7 +196,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 if (storedSettings) setSettings(prev => ({ ...prev, ...JSON.parse(storedSettings) }));
                 else setSettings({
                     storeName: 'Digi Deal',
-                    telegramUsername: 'digideal_support',
+                    telegramUsername: 'RosaAlba_Prof',
                     adminPassword: '',
                     bannerInterval: 3000
                 });
@@ -226,7 +226,7 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             await supabase.from('settings').upsert({
                 id: 1,
                 store_name: 'Digi Deal',
-                telegram_username: 'digideal_support',
+                telegram_username: 'RosaAlba_Prof',
                 admin_password: '',
                 admin_password_hash: '',
                 banner_interval: 3000
