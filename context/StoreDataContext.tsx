@@ -387,11 +387,12 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
                 status: order.status || 'pending'
             };
 
-            // Add payment fields if present
-            if (order.totalAmount !== undefined) orderData.total_amount = order.totalAmount;
-            if (order.currency) orderData.currency = order.currency;
-            if (order.paymentStatus) orderData.payment_status = order.paymentStatus;
-            if (order.paymentId) orderData.payment_id = order.paymentId;
+            // Payment fields temporarily disabled due to PostgREST schema cache
+            // Uncomment after schema cache refreshes (wait 5-10 min or restart project)
+            // if (order.totalAmount !== undefined) orderData.total_amount = order.totalAmount;
+            // if (order.currency) orderData.currency = order.currency;
+            // if (order.paymentStatus) orderData.payment_status = order.paymentStatus;
+            // if (order.paymentId) orderData.payment_id = order.paymentId;
 
             const { data, error } = await supabase.from('orders').insert([orderData]).select().single();
 
