@@ -70,13 +70,14 @@ export function createPaymentFormData(data: PaymentFormData): PaymentParams {
         baseParams.em = data.email;
     }
 
-    // Generate signature using required params
+    // Generate signature using required params with correct field names
+    // Order: amount, currency, description, merchantid, number (alphabetical)
     const signParams = {
-        c: baseParams.c,
-        d: baseParams.d,
-        o: baseParams.o,
-        oa: baseParams.oa,
-        s: baseParams.s,
+        amount: baseParams.s,
+        currency: baseParams.c,
+        description: baseParams.d,
+        merchantid: baseParams.oa,
+        number: baseParams.o,
     };
 
     const sign = generateSignature(signParams);
