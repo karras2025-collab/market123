@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useStoreData } from '../context/StoreDataContext';
-import { Trash2, ArrowRight, Mail, MessageCircle, Copy, Check } from 'lucide-react';
+import { Trash2, ArrowRight, Mail, MessageCircle, Copy, Check, CreditCard, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { redirectToPayment, CAPITALIST_CURRENCIES } from '../lib/capitalist';
 
 const CartPage: React.FC = () => {
   const { cart, removeFromCart, currentFlow, clearCart } = useCart();
@@ -11,10 +12,21 @@ const CartPage: React.FC = () => {
   const [requestId, setRequestId] = useState('');
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('RUB');
 
   // Form State for Site Request
   const [email, setEmail] = useState('');
   const [comments, setComments] = useState('');
+
+  // Calculate total price
+  const totalAmount = cart.reduce((sum, item) => {
+    const price = item.selectedVariant.price || 0;
+    return sum + price;
+  }, 0);
+
+  // Check if all items have prices (can use online payment)
+  const hasAllPrices = cart.every(item => item.selectedVariant.price && item.selectedVariant.price > 0);
 
   if (cart.length === 0 && !isSuccess) {
     return (
@@ -31,8 +43,55 @@ const CartPage: React.FC = () => {
     );
   }
 
-  // --- Logic for Success/Submission ---
+  // --- Handle Online Payment via Capitalist ---
+  const handleOnlinePayment = async () => {
+    if (!email) {
+      alert('Пожалуйста, введите email для получения чека');
+      return;
+    }
 
+    setIsProcessingPayment(true);
+
+    try {
+      // Create order in database first
+      const orderId = await addOrder({
+        email: email,
+        telegram: null,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          productTitle: item.product.title,
+          variantId: item.selectedVariant.id,
+          variantName: item.selectedVariant.name,
+        })),
+        status: 'pending',
+        totalAmount: totalAmount,
+        currency: selectedCurrency,
+        paymentStatus: 'pending',
+      });
+
+      // Create description for payment
+      const description = cart.map(item => item.product.title).join(', ').slice(0, 100);
+
+      // Redirect to Capitalist payment page
+      redirectToPayment({
+        operationId: orderId,
+        amount: totalAmount,
+        currency: selectedCurrency,
+        description: `Заказ: ${description}`,
+        email: email,
+        lang: 'ru',
+      });
+
+      // Clear cart after redirect initiated
+      clearCart();
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Ошибка при создании заказа. Попробуйте снова.');
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // --- Logic for Site Request Submission ---
   const handleSiteRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -111,10 +170,16 @@ const CartPage: React.FC = () => {
                 <p className="text-gray-400 text-sm font-normal leading-normal">
                   {item.selectedVariant.name}
                 </p>
-                {/* Visual tag for flow type */}
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-600 mt-1">
-                  {item.product.flow === 'site_request' ? 'Заявка на сайте' : 'Через Telegram'}
-                </span>
+                {/* Price display */}
+                {item.selectedVariant.price ? (
+                  <span className="text-primary font-bold mt-1">
+                    {item.selectedVariant.price.toLocaleString('ru-RU')} ₽
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-600 mt-1">
+                    {item.product.flow === 'site_request' ? 'Заявка на сайте' : 'Через Telegram'}
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => removeFromCart(index)}
@@ -133,27 +198,98 @@ const CartPage: React.FC = () => {
             <div className="bg-surface border border-border rounded-2xl p-6 lg:p-8 shadow-sm">
               <h3 className="text-xl font-bold mb-6 text-white">Оформление заказа</h3>
 
-              {currentFlow === 'site_request' ? (
-                // --- SITE REQUEST FORM ---
-                <form onSubmit={handleSiteRequestSubmit}>
-                  <div className="mb-5">
-                    <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="email">Контактный Email</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <Mail className="w-5 h-5" />
-                      </div>
-                      <input
-                        required
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        className="w-full bg-background border border-border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
+              {/* Email field - always shown */}
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="email">Контактный Email</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <input
+                    required
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full bg-background border border-border rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* If items have prices - show payment options */}
+              {hasAllPrices && totalAmount > 0 ? (
+                <>
+                  {/* Total */}
+                  <div className="bg-background border border-border rounded-xl p-4 mb-5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Итого:</span>
+                      <span className="text-2xl font-bold text-white">
+                        {totalAmount.toLocaleString('ru-RU')} ₽
+                      </span>
                     </div>
                   </div>
 
+                  {/* Currency selector */}
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Валюта оплаты</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.entries(CAPITALIST_CURRENCIES).slice(0, 3).map(([key, value]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setSelectedCurrency(value)}
+                          className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${selectedCurrency === value
+                              ? 'bg-primary text-white'
+                              : 'bg-background border border-border text-gray-400 hover:border-primary/50'
+                            }`}
+                        >
+                          {key}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pay button */}
+                  <button
+                    onClick={handleOnlinePayment}
+                    disabled={isProcessingPayment || !email}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold text-base py-4 px-6 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-3"
+                  >
+                    {isProcessingPayment ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5" />
+                        <span>Оплатить онлайн</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Payment methods hint */}
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
+                    <Wallet className="w-4 h-4" />
+                    <span>Карты, криптовалюта, электронные кошельки</span>
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <p className="text-xs text-gray-500 text-center">
+                      Или свяжитесь с менеджером для индивидуальных условий
+                    </p>
+                    <a
+                      href={telegramLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full mt-3 flex items-center justify-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 text-blue-300 py-2 rounded-xl font-medium transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Написать в Telegram
+                    </a>
+                  </div>
+                </>
+              ) : currentFlow === 'site_request' ? (
+                // --- SITE REQUEST FORM (no prices) ---
+                <form onSubmit={handleSiteRequestSubmit}>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-300 mb-2" htmlFor="comments">Дополнительно</label>
                     <textarea
@@ -168,7 +304,7 @@ const CartPage: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !email}
                     className="w-full bg-primary hover:bg-blue-600 disabled:opacity-50 text-white font-bold text-base py-4 px-6 rounded-xl shadow-[0_0_20px_rgba(19,91,236,0.3)] hover:shadow-[0_0_30px_rgba(19,91,236,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
@@ -215,7 +351,7 @@ const CartPage: React.FC = () => {
               )}
 
               <p className="text-center text-xs text-gray-600 mt-4 pt-4 border-t border-border">
-                Безопасный процесс. Оплата не требуется на этом этапе.
+                Безопасная оплата через Capitalist
               </p>
             </div>
           </div>

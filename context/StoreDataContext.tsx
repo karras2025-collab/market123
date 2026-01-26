@@ -380,12 +380,20 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Orders
     const addOrder = async (order: Omit<Order, 'id' | 'createdAt'>): Promise<string> => {
         if (isSupabaseConfigured && supabase) {
-            const { data, error } = await supabase.from('orders').insert([{
+            const orderData: Record<string, any> = {
                 email: order.email,
                 telegram: order.telegram,
                 items: order.items,
-                status: 'pending'
-            }]).select().single();
+                status: order.status || 'pending'
+            };
+
+            // Add payment fields if present
+            if (order.totalAmount !== undefined) orderData.total_amount = order.totalAmount;
+            if (order.currency) orderData.currency = order.currency;
+            if (order.paymentStatus) orderData.payment_status = order.paymentStatus;
+            if (order.paymentId) orderData.payment_id = order.paymentId;
+
+            const { data, error } = await supabase.from('orders').insert([orderData]).select().single();
 
             if (error) throw error;
             await refreshData();

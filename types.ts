@@ -52,12 +52,19 @@ export interface OrderItem {
   variantName: string;
 }
 
+// Payment status for orders
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
+
 export interface Order {
   id: string;
   email: string | null;
   telegram: string | null;
   items: OrderItem[];
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  paymentStatus?: PaymentStatus;
+  paymentId?: string;
+  totalAmount?: number;
+  currency?: string;
   createdAt: string;
 }
 

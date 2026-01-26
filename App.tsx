@@ -14,6 +14,9 @@ import HomePage from './pages/Home';
 import CatalogPage from './pages/Catalog';
 import ProductDetailsPage from './pages/ProductDetails';
 import CartPage from './pages/Cart';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFail from './pages/PaymentFail';
+import PaymentStatus from './pages/PaymentStatus';
 
 // Lazy load admin pages
 const AdminLayout = lazy(() => import('./admin/AdminLayout'));
@@ -46,6 +49,11 @@ function App() {
               <Route path="/product/:id" element={<Layout><ProductDetailsPage /></Layout>} />
               <Route path="/catalog/:id" element={<Layout><CatalogProductRedirect /></Layout>} />
               <Route path="/cart" element={<Layout><CartPage /></Layout>} />
+
+              {/* Payment Routes */}
+              <Route path="/payment/success" element={<Layout><PaymentSuccess /></Layout>} />
+              <Route path="/payment/fail" element={<Layout><PaymentFail /></Layout>} />
+              <Route path="/payment/status" element={<Layout><PaymentStatus /></Layout>} />
 
               {/* Admin Routes - Secret URL (DO NOT share publicly!) */}
               <Route path="/manage-zq84fk/login" element={
