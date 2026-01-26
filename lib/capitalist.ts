@@ -6,7 +6,7 @@ const CAPITALIST_SECRET_KEY = import.meta.env.VITE_CAPITALIST_SECRET_KEY || '';
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://digideal.netlify.app';
 
 // Capitalist payment gateway URL
-const CAPITALIST_PAY_URL = 'https://capitalist.net/merchant/payGate/pay';
+const CAPITALIST_PAY_URL = 'https://capitalist.net/merchant/payGate/createorder';
 
 export interface PaymentFormData {
     operationId: string;
