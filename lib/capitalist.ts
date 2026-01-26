@@ -110,21 +110,21 @@ export function redirectToPayment(data: PaymentFormData): void {
     form.style.display = 'none';
 
     const fields: Record<string, string> = {
-        oa: params.merchantAddress,
-        o: params.operationId,
-        c: params.currency,
-        s: params.sum,
-        d: params.description,
-        su: params.successURL,
-        fu: params.failURL,
-        us: params.statusURL,
-        i: params.interactionURL,
-        l: params.lang,
+        merchantid: params.merchantAddress,
+        number: params.operationId,
+        currency: params.currency,
+        amount: params.sum,
+        description: params.description,
+        success_url: params.successURL,
+        fail_url: params.failURL,
+        status_url: params.statusURL,
+        interaction_url: params.interactionURL,
+        lang: params.lang,
         sign: params.sign,
     };
 
     if (params.email) {
-        fields.em = params.email;
+        fields.email = params.email;
     }
 
     Object.entries(fields).forEach(([name, value]) => {
