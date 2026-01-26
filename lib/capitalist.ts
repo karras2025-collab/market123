@@ -158,11 +158,11 @@ export function verifyWebhookSignature(params: Record<string, string>, receivedS
 
 // Currency codes supported by Capitalist
 export const CAPITALIST_CURRENCIES = {
-    RUB: 'RUB',
+    RUR: 'RUR',  // Russian Rubles (not RUB!)
     USD: 'USD',
     EUR: 'EUR',
-    USDT_TRC20: 'USDTTRC20',
-    USDT_ERC20: 'USDTERC20',
+    USDT_TRC20: 'USDT-TRC20',
+    USDT_ERC20: 'USDT-ERC20',
     BTC: 'BTC',
 } as const;
 

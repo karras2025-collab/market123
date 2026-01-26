@@ -13,7 +13,7 @@ const CartPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('RUB');
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('RUR');
 
   // Form State for Site Request
   const [email, setEmail] = useState('');
@@ -240,8 +240,8 @@ const CartPage: React.FC = () => {
                           type="button"
                           onClick={() => setSelectedCurrency(value)}
                           className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${selectedCurrency === value
-                              ? 'bg-primary text-white'
-                              : 'bg-background border border-border text-gray-400 hover:border-primary/50'
+                            ? 'bg-primary text-white'
+                            : 'bg-background border border-border text-gray-400 hover:border-primary/50'
                             }`}
                         >
                           {key}
