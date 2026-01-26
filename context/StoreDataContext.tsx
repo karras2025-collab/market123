@@ -394,6 +394,9 @@ export const StoreDataProvider: React.FC<{ children: ReactNode }> = ({ children 
             // if (order.paymentStatus) orderData.payment_status = order.paymentStatus;
             // if (order.paymentId) orderData.payment_id = order.paymentId;
 
+            // Generate UUID on client side to bypass schema cache issue
+            orderData.id = crypto.randomUUID();
+
             const { data, error } = await supabase.from('orders').insert([orderData]).select().single();
 
             if (error) throw error;
