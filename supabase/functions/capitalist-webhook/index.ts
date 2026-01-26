@@ -29,7 +29,7 @@ async function hmacMd5(message: string, key: string): Promise<string> {
 }
 
 function verifySignature(params: Record<string, string>, secretKey: string, receivedSign: string): Promise<boolean> {
-    // Sort required params alphabetically and concatenate values
+    // Sort required params alphabetically and concatenate values with colon separator
     const signParams = {
         c: params.c || '',      // currency
         o: params.o || '',      // operation ID
@@ -39,9 +39,15 @@ function verifySignature(params: Record<string, string>, secretKey: string, rece
     };
 
     const sortedKeys = Object.keys(signParams).sort();
-    const dataString = sortedKeys.map(key => signParams[key as keyof typeof signParams]).join('');
+    // Values must be joined with colon (:) as separator according to Capitalist API
+    const dataString = sortedKeys.map(key => signParams[key as keyof typeof signParams]).join(':');
 
-    return hmacMd5(dataString, secretKey).then(calc => calc === receivedSign);
+    console.log('Webhook signature verification - data string:', dataString);
+
+    return hmacMd5(dataString, secretKey).then(calc => {
+        console.log('Calculated signature:', calc, 'Received:', receivedSign);
+        return calc === receivedSign;
+    });
 }
 
 Deno.serve(async (req) => {

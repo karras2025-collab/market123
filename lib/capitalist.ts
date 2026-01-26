@@ -34,17 +34,21 @@ export interface PaymentParams {
 
 /**
  * Generate HMAC-MD5 signature for Capitalist API
- * According to docs: concatenate required params alphabetically, then HMAC-MD5 with secret key
+ * According to docs: sort params alphabetically, concatenate values with colon (:), then HMAC-MD5 with secret key
  */
 export function generateSignature(params: Record<string, string>): string {
     // Sort parameters alphabetically by key
     const sortedKeys = Object.keys(params).sort();
 
-    // Concatenate values in alphabetical order of keys
-    const dataString = sortedKeys.map(key => params[key]).join('');
+    // Concatenate values in alphabetical order of keys with colon separator
+    const dataString = sortedKeys.map(key => params[key]).join(':');
 
-    // Generate HMAC-MD5 signature
+    console.log('Signature data string:', dataString); // Debug log
+
+    // Generate HMAC-MD5 signature (lowercase hex)
     const signature = CryptoJS.HmacMD5(dataString, CAPITALIST_SECRET_KEY).toString();
+
+    console.log('Generated signature:', signature); // Debug log
 
     return signature;
 }
