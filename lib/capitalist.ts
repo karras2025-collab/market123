@@ -103,18 +103,12 @@ export function createPaymentFormData(data: PaymentFormData): PaymentParams {
 }
 
 /**
- * Create and submit payment form to Capitalist
+ * Create and submit payment request to Capitalist via JSON API
  */
-export function redirectToPayment(data: PaymentFormData): void {
+export async function redirectToPayment(data: PaymentFormData): Promise<void> {
     const params = createPaymentFormData(data);
 
-    // Create a form and submit it
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = CAPITALIST_PAY_URL;
-    form.style.display = 'none';
-
-    const fields: Record<string, string> = {
+    const requestBody = {
         merchantid: params.merchantAddress,
         number: params.operationId,
         currency: params.currency,
@@ -126,22 +120,37 @@ export function redirectToPayment(data: PaymentFormData): void {
         interaction_url: params.interactionURL,
         lang: params.lang,
         sign: params.sign,
+        ...(params.email && { email: params.email }),
     };
 
-    if (params.email) {
-        fields.email = params.email;
+    console.log('Capitalist request body:', requestBody);
+
+    try {
+        const response = await fetch(CAPITALIST_PAY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        const result = await response.json();
+        console.log('Capitalist response:', result);
+
+        if (result.url) {
+            // Redirect to payment page
+            window.location.href = result.url;
+        } else if (result.errors) {
+            console.error('Capitalist errors:', result.errors);
+            throw new Error(JSON.stringify(result.errors));
+        } else {
+            throw new Error('Unknown response from Capitalist');
+        }
+    } catch (error) {
+        console.error('Capitalist API error:', error);
+        throw error;
     }
-
-    Object.entries(fields).forEach(([name, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
 }
 
 /**

@@ -73,7 +73,7 @@ const CartPage: React.FC = () => {
       const description = cart.map(item => item.product.title).join(', ').slice(0, 100);
 
       // Redirect to Capitalist payment page
-      redirectToPayment({
+      await redirectToPayment({
         operationId: orderId,
         amount: totalAmount,
         currency: selectedCurrency,
@@ -82,7 +82,7 @@ const CartPage: React.FC = () => {
         lang: 'ru',
       });
 
-      // Clear cart after redirect initiated
+      // Clear cart after successful redirect initiation
       clearCart();
     } catch (error) {
       console.error('Payment error:', error);
