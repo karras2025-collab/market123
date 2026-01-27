@@ -5,8 +5,8 @@ const CAPITALIST_MERCHANT_ADDRESS = import.meta.env.VITE_CAPITALIST_MERCHANT_ADD
 const CAPITALIST_SECRET_KEY = import.meta.env.VITE_CAPITALIST_SECRET_KEY || '';
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://digideal.netlify.app';
 
-// Capitalist payment gateway URL
-const CAPITALIST_PAY_URL = 'https://capitalist.net/merchant/payGate/createorder';
+// Capitalist payment gateway URL - using form endpoint, not API
+const CAPITALIST_PAY_URL = 'https://capitalist.net/merchant/pay';
 
 export interface PaymentFormData {
     operationId: string;
@@ -70,19 +70,21 @@ export function createPaymentFormData(data: PaymentFormData): PaymentParams {
         l: data.lang || 'ru',              // Language
     };
 
-    if (data.email) {
-        baseParams.em = data.email;
-    }
-
     // Generate signature using required params with correct field names
-    // Order: amount, currency, description, merchantid, number (alphabetical)
-    const signParams = {
+    // Order: amount, currency, description, merchantid, number, opt_email (alphabetical)
+    // According to docs: параметры конкатенируются по алфавиту
+    const signParams: Record<string, string> = {
         amount: baseParams.s,
         currency: baseParams.c,
         description: baseParams.d,
         merchantid: baseParams.oa,
         number: baseParams.o,
     };
+
+    // If email is provided, add it to signature params as opt_email
+    if (data.email) {
+        signParams.opt_email = data.email;
+    }
 
     const sign = generateSignature(signParams);
 
@@ -103,12 +105,19 @@ export function createPaymentFormData(data: PaymentFormData): PaymentParams {
 }
 
 /**
- * Create and submit payment request to Capitalist via JSON API
+ * Create and submit payment form to Capitalist (form POST avoids CORS issues)
  */
-export async function redirectToPayment(data: PaymentFormData): Promise<void> {
+export function redirectToPayment(data: PaymentFormData): void {
     const params = createPaymentFormData(data);
 
-    const requestBody = {
+    // Create a form and submit it (bypasses CORS)
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = CAPITALIST_PAY_URL;
+    form.style.display = 'none';
+    form.acceptCharset = 'UTF-8';
+
+    const fields: Record<string, string> = {
         merchantid: params.merchantAddress,
         number: params.operationId,
         currency: params.currency,
@@ -120,37 +129,28 @@ export async function redirectToPayment(data: PaymentFormData): Promise<void> {
         interaction_url: params.interactionURL,
         lang: params.lang,
         sign: params.sign,
-        ...(params.email && { email: params.email }),
     };
 
-    console.log('Capitalist request body:', requestBody);
-
-    try {
-        const response = await fetch(CAPITALIST_PAY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
-
-        const result = await response.json();
-        console.log('Capitalist response:', result);
-
-        if (result.url) {
-            // Redirect to payment page
-            window.location.href = result.url;
-        } else if (result.errors) {
-            console.error('Capitalist errors:', result.errors);
-            throw new Error(JSON.stringify(result.errors));
-        } else {
-            throw new Error('Unknown response from Capitalist');
-        }
-    } catch (error) {
-        console.error('Capitalist API error:', error);
-        throw error;
+    if (params.email) {
+        fields.opt_email = params.email;
     }
+
+    console.log('=== CAPITALIST PAYMENT DEBUG ===');
+    console.log('Form fields:', fields);
+    console.log('Merchant ID:', CAPITALIST_MERCHANT_ADDRESS);
+    console.log('Secret Key (first 10 chars):', CAPITALIST_SECRET_KEY.substring(0, 10) + '...');
+    console.log('================================');
+
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
 }
 
 /**
